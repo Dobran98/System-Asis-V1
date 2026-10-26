@@ -204,6 +204,14 @@
                     $('#usersTable tbody').on('click', '.delete-user-btn', handleDeleteUser);
                     $('#user-form').on('submit', handleSaveUser);
                     $('#backfill-dates-btn').on('click', handleBackfillDates);
+                    $('#btn-hash-passwords-superadmin').on('click', handleHashPasswordsSuperAdmin);
+
+                    // Visibilidad exclusiva para SuperAdmin (los coordinadores generales no lo ven)
+                    if (currentUser && normalizeSubRol(currentUser.subRol) === 'superadmin') {
+                        $('#btn-hash-passwords-superadmin').show();
+                    } else {
+                        $('#btn-hash-passwords-superadmin').hide();
+                    }
 
                     $('#form-user-foto-file').on('change', function (e) {
                         const file = e.target.files[0];
@@ -1012,6 +1020,33 @@
                 btn.prop('disabled', false).html(orig);
                 showNotification('Error de Servidor', err.message, 'danger');
             }).backfillFechaInclusion();
+        }
+
+        function handleHashPasswordsSuperAdmin() {
+            if (!currentUser || normalizeSubRol(currentUser.subRol) !== 'superadmin') {
+                showNotification('Acceso Denegado', 'Esta función es exclusiva del SuperAdmin.', 'danger');
+                return;
+            }
+
+            if (!confirm('¿Deseas blindar todas las contraseñas en la base de datos?\n\nAquellas que aún estén en texto plano serán convertidas a un hash criptográfico SHA-256 con Salt. Los usuarios podrán seguir iniciando sesión con su misma contraseña con total normalidad.')) return;
+
+            const btn = $('#btn-hash-passwords-superadmin');
+            const orig = btn.html();
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Blindando...');
+
+            google.script.run.withSuccessHandler(function (res) {
+                btn.prop('disabled', false).html(orig);
+                if (res && res.success) {
+                    showNotification('Seguridad Aplicada', res.message || 'Contraseñas blindadas correctamente.', 'success');
+                    cachedAdminData.users = null;
+                    populateUsersManagementTable();
+                } else {
+                    showNotification('Error', (res && res.message) ? res.message : 'No se pudo completar el blindaje.', 'danger');
+                }
+            }).withFailureHandler(function (err) {
+                btn.prop('disabled', false).html(orig);
+                showNotification('Error de Servidor', err ? err.message : 'Error desconocido.', 'danger');
+            }).migrarContrasenasAHash();
         }
 
         function handleDeleteUser() {

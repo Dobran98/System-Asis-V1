@@ -28,19 +28,67 @@ const asisApi = {
     }
   },
 
+  _generateSalt: function () {
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      const array = new Uint8Array(8);
+      crypto.getRandomValues(array);
+      return Array.from(array, b => ('0' + b.toString(16)).slice(-2)).join('');
+    }
+    return Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+  },
+
   /**
-   * Autenticación de usuario
+   * Genera un hash criptográfico SHA-256 con salt (formato salt:hashHex)
+   */
+  hashPassword: async function (password, salt) {
+    if (!password) return '';
+    const strPass = String(password).trim();
+    const parts = strPass.split(':');
+    if (parts.length === 2 && parts[0].length === 16 && parts[1].length === 64) {
+      return strPass;
+    }
+    const finalSalt = salt || this._generateSalt();
+    const encoder = new TextEncoder();
+    const data = encoder.encode(finalSalt + strPass);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => ('0' + b.toString(16)).slice(-2)).join('');
+    return finalSalt + ':' + hashHex;
+  },
+
+  /**
+   * Verifica una contraseña contra su valor almacenado.
+   * Compatible con texto plano y con hashes salt:hashHex.
+   */
+  verifyPassword: async function (password, storedHash) {
+    if (!storedHash) return false;
+    const strStored = String(storedHash).trim();
+    const strPass = String(password).trim();
+    if (!strStored.includes(':')) {
+      return strPass === strStored;
+    }
+    const parts = strStored.split(':');
+    if (parts.length !== 2 || parts[0].length !== 16) {
+      return strPass === strStored;
+    }
+    const salt = parts[0];
+    const computed = await this.hashPassword(strPass, salt);
+    return computed === strStored;
+  },
+
+  /**
+   * Autenticación de usuario con soporte para texto plano y hash criptográfico
    */
   userLogin: async function (email, password) {
     try {
       const client = window.supabaseClient;
       const cleanEmail = String(email || '').trim().toLowerCase();
+      const rawPassword = String(password || '').trim();
 
       const { data: user, error } = await client
         .from('usuarios')
         .select('*')
         .ilike('email', cleanEmail)
-        .eq('password_hash', String(password || '').trim())
         .maybeSingle();
 
       if (error) {
@@ -49,6 +97,19 @@ const asisApi = {
       }
 
       if (!user) return null;
+
+      const isValid = await this.verifyPassword(rawPassword, user.password_hash);
+      if (!isValid) return null;
+
+      // Auto-blindaje transparente: si la contraseña estaba en texto plano, pasarla a hash de inmediato
+      if (!String(user.password_hash).includes(':')) {
+        try {
+          const secureHash = await this.hashPassword(rawPassword);
+          await client.from('usuarios').update({ password_hash: secureHash }).eq('user_id', user.user_id);
+        } catch (updateErr) {
+          console.warn('[API] Auto-blindaje en login advertencia:', updateErr);
+        }
+      }
 
       if (user.estado === 'Inactivo') {
         return { inactive: true };
@@ -754,7 +815,7 @@ const asisApi = {
       };
 
       if (userData.password) {
-        payload.password_hash = userData.password;
+        payload.password_hash = await this.hashPassword(userData.password);
       }
 
       const { data, error } = await client.from('usuarios').upsert(payload).select().single();
@@ -786,16 +847,21 @@ const asisApi = {
         .from('usuarios')
         .select('*')
         .eq('user_id', userId)
-        .eq('password_hash', currentPass)
         .maybeSingle();
 
       if (findErr || !u) {
+        return { success: false, message: 'Usuario no encontrado.' };
+      }
+
+      const isValid = await this.verifyPassword(currentPass, u.password_hash);
+      if (!isValid) {
         return { success: false, message: 'La contraseña actual no es correcta.' };
       }
 
+      const hashedNew = await this.hashPassword(newPass);
       const { error: updateErr } = await client
         .from('usuarios')
-        .update({ password_hash: newPass })
+        .update({ password_hash: hashedNew })
         .eq('user_id', userId);
 
       if (updateErr) throw updateErr;
@@ -803,6 +869,77 @@ const asisApi = {
       return { success: true, message: 'Contraseña actualizada correctamente.' };
     } catch (e) {
       console.error('[API] Error changePassword:', e);
+      return { success: false, message: e.message };
+    }
+  },
+
+  /**
+   * Herramienta exclusiva de SuperAdmin:
+   * Revisa todos los registros en 'usuarios' y convierte a hash SHA-256 + Salt
+   * todas las contraseñas que aún se encuentren en texto plano.
+   */
+  migrarContrasenasAHash: async function () {
+    try {
+      const client = window.supabaseClient;
+      const { data: users, error } = await client
+        .from('usuarios')
+        .select('user_id, password_hash');
+
+      if (error) throw error;
+      if (!users || users.length === 0) {
+        return {
+          success: true,
+          total: 0,
+          migradas: 0,
+          yaHasheadas: 0,
+          errores: 0,
+          message: 'No hay usuarios registrados en la base de datos.'
+        };
+      }
+
+      let migradas = 0;
+      let yaHasheadas = 0;
+      let errores = 0;
+
+      for (const u of users) {
+        const pass = String(u.password_hash || '').trim();
+        if (!pass) continue;
+
+        const parts = pass.split(':');
+        if (parts.length === 2 && parts[0].length === 16 && parts[1].length === 64) {
+          yaHasheadas++;
+          continue;
+        }
+
+        try {
+          const hashed = await this.hashPassword(pass);
+          const { error: updateError } = await client
+            .from('usuarios')
+            .update({ password_hash: hashed })
+            .eq('user_id', u.user_id);
+
+          if (updateError) {
+            console.error(`[API] Error blindando usuario ${u.user_id}:`, updateError);
+            errores++;
+          } else {
+            migradas++;
+          }
+        } catch (e) {
+          console.error(`[API] Error procesando hash para ${u.user_id}:`, e);
+          errores++;
+        }
+      }
+
+      return {
+        success: true,
+        total: users.length,
+        migradas: migradas,
+        yaHasheadas: yaHasheadas,
+        errores: errores,
+        message: `Blindaje completado: ${migradas} contraseñas convertidas a hash SHA-256 con Salt, ${yaHasheadas} ya estaban blindadas${errores > 0 ? `, ${errores} con errores` : ''}.`
+      };
+    } catch (e) {
+      console.error('[API] Error migrarContrasenasAHash:', e);
       return { success: false, message: e.message };
     }
   },
