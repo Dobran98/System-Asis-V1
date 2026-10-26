@@ -13,8 +13,8 @@ const QUEUE_KEY = 'asis_offline_queue';
 const HISTORY_KEY = 'asis_scan_history';
 
 const defaultConfig = {
-  endpointUrl: '', // URL del Web App de Google Apps Script o API externa
-  apiKey: '',
+  endpointUrl: 'https://bitplsgoqipffkamdmnx.supabase.co',
+  apiKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpdHBsc2dvcWlwZmZrYW1kbW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNDA5ODAsImV4cCI6MjEwODYxNjk4MH0.Dju5VAHt4vwdzsCzbis9S-Z0ZSS64XaMwGXryQ_EeZE',
   masterQRId: 'QR-MAESTRO-ASISTENCIA-V1',
   scanMode: 'master', // 'master' (empleado escanea QR sede) o 'badge' (tótem escanea carnet)
   soundEnabled: true,
@@ -429,6 +429,62 @@ async function dispatchAttendanceRecord(record) {
   }
 
   try {
+    // Si el destino es Supabase, insertar directamente mediante PostgREST API
+    if (config.endpointUrl.includes('supabase.co')) {
+      const baseUrl = config.endpointUrl.replace(/\/+$/, '');
+      const headers = {
+        'apikey': config.apiKey,
+        'Authorization': `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      };
+
+      // 1. Resolver usuario desde Supabase si existe
+      let finalName = record.name;
+      let finalTurno = 'mañana';
+      try {
+        const uRes = await fetch(`${baseUrl}/rest/v1/usuarios?user_id=eq.${encodeURIComponent(record.userId)}&select=*`, { headers });
+        if (uRes.ok) {
+          const uData = await uRes.json();
+          if (uData && uData.length > 0) {
+            finalName = uData[0].nombre || finalName;
+            finalTurno = uData[0].turno || 'mañana';
+          }
+        }
+      } catch (uErr) {
+        console.warn('Verificación previa de usuario omitida:', uErr);
+      }
+
+      // 2. Insertar marca de asistencia
+      const insertRes = await fetch(`${baseUrl}/rest/v1/asistencias`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          user_id: record.userId,
+          nombre: finalName,
+          turno: finalTurno,
+          tipo: record.type,
+          estado: 'Presente',
+          source: record.source || 'Vercel-Scanner'
+        })
+      });
+
+      if (!insertRes.ok) {
+        const errJson = await insertRes.json().catch(() => ({}));
+        throw new Error(errJson.message || `Error HTTP ${insertRes.status}`);
+      }
+
+      playSuccessSound();
+      triggerVibration([100, 50, 100]);
+      showToast('¡Asistencia Registrada!', `Registro de '${record.type}' confirmado para ${finalName}.`, 'success');
+      addHistoryItem({ ...record, name: finalName }, 'success');
+
+      if (config.autoSwitchType && config.scanMode === 'master') {
+        setScanType(record.type === 'Entrada' ? 'Salida' : 'Entrada');
+      }
+      return;
+    }
+
     // Usar 'text/plain' para evitar preflight CORS (OPTIONS) hacia Google Apps Script
     const response = await fetch(config.endpointUrl, {
       method: 'POST',
@@ -739,6 +795,31 @@ async function handleTestConnection() {
   showToast('Probando...', 'Enviando ping al servidor...', 'warning');
 
   try {
+    // Si es una URL de Supabase, probar el endpoint REST de salud/configuracion
+    if (url.includes('supabase.co')) {
+      const baseUrl = url.replace(/\/+$/, '');
+      const apiKey = document.getElementById('input-api-key').value.trim() || config.apiKey;
+      const t0 = performance.now();
+      const res = await fetch(`${baseUrl}/rest/v1/config_horarios?select=clave,valor&limit=1`, {
+        headers: {
+          'apikey': apiKey,
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+      const t1 = performance.now();
+      const latency = Math.round(t1 - t0);
+
+      if (res.ok) {
+        playSuccessSound();
+        showToast('¡Conexión Exitosa!', `Supabase PostgreSQL Activa y Operativa (Latencia: ${latency}ms)`, 'success');
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        playFailureSound();
+        showToast('Error de Conexión', errData.message || `HTTP ${res.status}: Clave API o URL incorrecta.`, 'error');
+      }
+      return;
+    }
+
     const t0 = performance.now();
     const res = await fetch(url, {
       method: 'POST',
