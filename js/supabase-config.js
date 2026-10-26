@@ -10,7 +10,6 @@ const SUPABASE_CONFIG = {
 // Inicializar cliente oficial de Supabase
 if (window.supabase) {
   window.supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
-  console.log('⚡ [Supabase] Cliente inicializado correctamente para', SUPABASE_CONFIG.url);
 } else {
   console.error('❌ [Supabase] SDK no disponible en window.supabase.');
 }

@@ -29,8 +29,6 @@
         // Cualquier método invocado en google.script.run
         return async function (...args) {
           try {
-            console.log(`[Bridge ➔ Supabase] ${prop}(`, args, `)`);
-
             let result = null;
             if (window.asisApi && typeof window.asisApi[prop] === 'function') {
               result = await window.asisApi[prop](...args);
@@ -62,6 +60,4 @@
   window.google = window.google || {};
   window.google.script = window.google.script || {};
   window.google.script.run = createGoogleScriptRunProxy(null, null);
-
-  console.log('🚀 [Bridge] Shim de google.script.run conectado a Supabase con éxito.');
 })();
