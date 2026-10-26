@@ -5,6 +5,13 @@
  */
 
 (function () {
+  function createSafeFallback() {
+    const arr = [];
+    arr.success = true;
+    arr.data = [];
+    return arr;
+  }
+
   function createGoogleScriptRunProxy(successFn, failFn) {
     return new Proxy({}, {
       get(target, prop) {
@@ -28,8 +35,8 @@
             if (window.asisApi && typeof window.asisApi[prop] === 'function') {
               result = await window.asisApi[prop](...args);
             } else {
-              console.warn(`[Bridge] Método pendiente en asisApi: ${prop}. Retornando valor seguro.`);
-              result = { success: true, data: [] };
+              console.warn(`[Bridge] Método pendiente en asisApi: ${prop}. Retornando colección segura.`);
+              result = createSafeFallback();
             }
 
             if (typeof successFn === 'function') {
@@ -41,7 +48,10 @@
             if (typeof failFn === 'function') {
               failFn(err);
             } else if (typeof successFn === 'function') {
-              successFn({ success: false, error: err.message });
+              const safeErr = createSafeFallback();
+              safeErr.success = false;
+              safeErr.error = err.message;
+              successFn(safeErr);
             }
           }
         };
