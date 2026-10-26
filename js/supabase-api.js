@@ -791,39 +791,132 @@ const asisApi = {
   },
 
   /**
+   * Crear nuevo usuario (invocado por el modal de usuario del Admin)
+   */
+  addNewUser: async function (userData) {
+    return this.saveUser(userData);
+  },
+
+  /**
+   * Actualizar usuario existente (invocado por el modal de usuario del Admin)
+   */
+  updateUser: async function (userData) {
+    return this.saveUser(userData);
+  },
+
+  /**
    * Guardar o crear usuario (Admin)
    */
   saveUser: async function (userData) {
     try {
       const client = window.supabaseClient;
-      const uid = userData.userId || `user_${Date.now()}`;
+      const isNew = !userData.userId || String(userData.userId).trim() === '';
+      const uid = !isNew ? String(userData.userId).trim() : `user_${Date.now()}`;
+
+      const cleanEmail = (userData.email && String(userData.email).trim() !== '')
+        ? String(userData.email).trim().toLowerCase()
+        : `${uid}@empresa.com`;
+
+      // Si es un nuevo usuario, validar que el correo no esté ocupado
+      if (isNew) {
+        const { data: existingUser } = await client
+          .from('usuarios')
+          .select('user_id')
+          .ilike('email', cleanEmail)
+          .maybeSingle();
+
+        if (existingUser) {
+          return { success: false, message: `El correo '${cleanEmail}' ya pertenece a otro usuario.` };
+        }
+      }
+
+      // Validar turno permitido por el constraint de la BD ('mañana', 'tarde', 'mixto')
+      const rawTurno = String(userData.turno || 'mañana').toLowerCase();
+      const turno = ['mañana', 'tarde', 'mixto'].includes(rawTurno) ? rawTurno : 'mañana';
+
+      // Validar rol permitido ('Admin', 'Coordinador', 'Usuario')
+      const rawRol = userData.role || userData.rol || 'Usuario';
+      const rol = ['Admin', 'Coordinador', 'Usuario'].includes(rawRol) ? rawRol : 'Usuario';
 
       const payload = {
         user_id: uid,
-        nombre: userData.name,
-        email: userData.email ? userData.email.toLowerCase() : '',
-        rol: userData.role || 'Usuario',
-        sub_rol: userData.subRol || 'Operador/a',
-        cedula: userData.cedula || null,
+        nombre: userData.name || userData.nombre || `Usuario ${uid}`,
+        email: cleanEmail,
+        rol: rol,
+        sub_rol: userData.subRol || userData.sub_rol || 'Operador/a',
+        cedula: (userData.cedula && String(userData.cedula).trim() !== '') ? String(userData.cedula).trim() : null,
         institucion: userData.institucion || 'Sede Central',
-        turno: userData.turno || 'mañana',
-        telefono: userData.telefono || null,
-        direccion: userData.direccion || null,
+        turno: turno,
+        telefono: (userData.telefono && String(userData.telefono).trim() !== '') ? String(userData.telefono).trim() : null,
+        direccion: (userData.direccion && String(userData.direccion).trim() !== '') ? String(userData.direccion).trim() : null,
         estado: userData.estado || 'Activo',
-        foto_url: userData.fotoUrl || null,
-        areas_ids: Array.isArray(userData.areas) ? userData.areas : []
+        foto_url: userData.foto || userData.fotoUrl || null,
+        areas_ids: Array.isArray(userData.areas) ? userData.areas : [],
+        tolerancia_personalizada_min: parseInt(userData.toleranciaPersonalizada, 10) || 0
       };
 
-      if (userData.password) {
+      if (userData.nacimiento && String(userData.nacimiento).trim() !== '') {
+        payload.nacimiento = userData.nacimiento;
+      }
+
+      if (userData.fechaInclusion && userData.fechaInclusion !== 'N/A' && String(userData.fechaInclusion).trim() !== '') {
+        payload.fecha_inclusion = userData.fechaInclusion;
+      }
+
+      // Blindaje de contraseña
+      if (isNew) {
+        const rawPass = (userData.password && String(userData.password).trim() !== '') ? String(userData.password).trim() : '123456';
+        payload.password_hash = await this.hashPassword(rawPass);
+      } else if (userData.password && String(userData.password).trim() !== '') {
         payload.password_hash = await this.hashPassword(userData.password);
       }
 
       const { data, error } = await client.from('usuarios').upsert(payload).select().single();
       if (error) throw error;
 
-      return { success: true, message: 'Usuario guardado exitosamente.', user: data };
+      return {
+        success: true,
+        message: isNew ? 'Usuario registrado exitosamente.' : 'Usuario actualizado exitosamente.',
+        user: data
+      };
     } catch (e) {
       console.error('[API] Error saveUser:', e);
+      return { success: false, message: e.message };
+    }
+  },
+
+  /**
+   * Sincronizar fechas de ingreso con el primer marcaje de asistencia
+   */
+  backfillFechaInclusion: async function () {
+    try {
+      const client = window.supabaseClient;
+      const { data: asistencias, error } = await client
+        .from('asistencias')
+        .select('user_id, timestamp')
+        .order('timestamp', { ascending: true });
+
+      if (error) throw error;
+
+      const firstMap = {};
+      for (const a of (asistencias || [])) {
+        if (!firstMap[a.user_id]) {
+          firstMap[a.user_id] = a.timestamp;
+        }
+      }
+
+      let count = 0;
+      for (const [uid, ts] of Object.entries(firstMap)) {
+        await client.from('usuarios').update({ fecha_inclusion: ts }).eq('user_id', uid);
+        count++;
+      }
+
+      return {
+        success: true,
+        message: `Sincronización completada: ${count} fechas actualizadas.`
+      };
+    } catch (e) {
+      console.error('[API] Error backfillFechaInclusion:', e);
       return { success: false, message: e.message };
     }
   },
