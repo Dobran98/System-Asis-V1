@@ -277,7 +277,16 @@ const asisApi = {
       const uid = data.userId || data.id;
       const type = data.type || 'Entrada';
 
-      // Resolver usuario si no viene el nombre o turno
+      // 1. Validar estado previo (evitar doble entrada o salida sin entrada previa)
+      const lastState = await this.getLastAttendanceState(uid);
+      if (type === 'Entrada' && lastState && lastState.type === 'Entrada') {
+        return { success: false, message: "Ya tienes una 'Entrada' activa. Debes registrar Salida." };
+      }
+      if (type === 'Salida' && (!lastState || lastState.type !== 'Entrada')) {
+        return { success: false, message: "Falta marcar 'Entrada' antes de poder registrar Salida." };
+      }
+
+      // 2. Resolver usuario si no viene el nombre o turno
       let finalName = data.name;
       let finalTurno = data.turno || 'mañana';
 
@@ -338,9 +347,10 @@ const asisApi = {
         .maybeSingle();
 
       if (error) throw error;
-      if (!data) return { state: 'Sin registros', lastType: null, lastTime: null };
+      if (!data) return { type: null, state: 'Sin registros', lastType: null, lastTime: null };
 
       return {
+        type: data.tipo,
         state: data.tipo,
         lastType: data.tipo,
         lastTime: data.timestamp,
@@ -348,8 +358,15 @@ const asisApi = {
       };
     } catch (e) {
       console.error('[API] Error getLastAttendanceState:', e);
-      return { state: 'Error', error: e.message };
+      return { type: null, state: 'Error', error: e.message };
     }
+  },
+
+  /**
+   * Alias canónico para la UI de usuario
+   */
+  getAttendanceRecords: async function (userId) {
+    return this.getUserAttendanceHistory(userId);
   },
 
   /**

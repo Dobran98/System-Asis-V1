@@ -439,7 +439,7 @@ async function dispatchAttendanceRecord(record) {
         'Prefer': 'return=representation'
       };
 
-      // 1. Resolver usuario desde Supabase si existe
+      // 1. Resolver usuario desde Supabase si existe y comprobar estado previo
       let finalName = record.name;
       let finalTurno = 'mañana';
       try {
@@ -449,6 +449,32 @@ async function dispatchAttendanceRecord(record) {
           if (uData && uData.length > 0) {
             finalName = uData[0].nombre || finalName;
             finalTurno = uData[0].turno || 'mañana';
+          }
+        }
+
+        // Consultar la última marca del usuario para respetar transiciones DENTRO / FUERA
+        const lastAttRes = await fetch(`${baseUrl}/rest/v1/asistencias?user_id=eq.${encodeURIComponent(record.userId)}&order=timestamp.desc&limit=1`, { headers });
+        if (lastAttRes.ok) {
+          const lastAtt = await lastAttRes.json();
+          if (lastAtt && lastAtt.length > 0) {
+            const lastType = lastAtt[0].tipo;
+            if (record.type === 'Entrada' && lastType === 'Entrada') {
+              playFailureSound();
+              showToast('Atención', `Ya tienes una 'Entrada' activa (DENTRO). Debes registrar Salida.`, 'warning');
+              addHistoryItem({ ...record, name: finalName }, 'denied');
+              return;
+            }
+            if (record.type === 'Salida' && lastType !== 'Entrada') {
+              playFailureSound();
+              showToast('Atención', `Falta marcar 'Entrada' (actualmente FUERA).`, 'warning');
+              addHistoryItem({ ...record, name: finalName }, 'denied');
+              return;
+            }
+          } else if (record.type === 'Salida') {
+            playFailureSound();
+            showToast('Atención', `Falta marcar 'Entrada' previa.`, 'warning');
+            addHistoryItem({ ...record, name: finalName }, 'denied');
+            return;
           }
         }
       } catch (uErr) {
