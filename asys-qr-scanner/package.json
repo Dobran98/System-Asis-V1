@@ -1,0 +1,17 @@
+{
+  "name": "asys-qr-scanner",
+  "version": "2.0.0",
+  "description": "Terminal de escaneo ultrarrápido de asistencia QR universal y multiplataforma.",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "qr-scanner",
+    "attendance",
+    "asys",
+    "pwa",
+    "vercel"
+  ],
+  "author": "Asys Constructora",
+  "license": "MIT"
+}

@@ -1,0 +1,1439 @@
+<div id="wrapper">
+    <div id="content-wrapper" class="d-flex flex-column">
+        <div id="content">
+            <!-- Barra Superior -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                <h1 class="h3 mb-0 text-gray-800">Panel de Administrador</h1>
+                <ul class="navbar-nav ml-auto">
+                    <!-- Botón de Mi Asistencia / Escaneo -->
+                    <li class="nav-item d-flex align-items-center mr-3">
+                        <button id="personal-attendance-btn" class="btn btn-sm btn-primary btn-icon-split shadow-sm" title="Mi Asistencia y Escaneo">
+                            <span class="icon text-white-50"><i class="fas fa-camera"></i></span>
+                            <span class="text d-none d-sm-inline">Mi Asistencia</span>
+                        </button>
+                    </li>
+                    <!-- Botón de Cambio de Tema -->
+                    <li class="nav-item d-flex align-items-center mr-3">
+                        <button id="theme-toggle-btn" class="btn btn-sm btn-dark btn-circle" onclick="toggleTheme()" title="Cambiar Tema">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </li>
+                    <li class="nav-item dropdown no-arrow">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown">
+                            <span class="mr-2 d-none d-lg-inline text-gray-600 small" id="user-name-display"></span>
+                            <img class="img-profile rounded-circle" src="https://startbootstrap.github.io/startbootstrap-sb-admin-2/img/undraw_profile.svg">
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in">
+                            <a class="dropdown-item" href="#" id="change-password-menu-btn">
+                                <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>Cambiar Contraseña
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#" id="logout-button">
+                                <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>Cerrar Sesión
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="container-fluid">
+                <!-- PESTAÑAS DE NAVEGACIÓN -->
+                <ul class="nav nav-tabs" id="adminTab" role="tablist">
+                    <li class="nav-item"><a class="nav-link active" id="home-tab" data-toggle="tab" href="#home-panel" role="tab"><i class="fas fa-fw fa-home"></i> Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" id="dashboard-tab" data-toggle="tab" href="#dashboard-panel" role="tab"><i class="fas fa-fw fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" id="users-tab" data-toggle="tab" href="#users-panel" role="tab"><i class="fas fa-fw fa-users-cog"></i> Gestión de Usuarios</a></li>
+                    <li class="nav-item"><a class="nav-link" id="permissions-tab" data-toggle="tab" href="#permissions-panel" role="tab"><i class="fas fa-fw fa-calendar-check"></i> Gestión de Permisos</a></li>
+                    <li class="nav-item"><a class="nav-link" id="duties-tab" data-toggle="tab" href="#duties-panel" role="tab"><i class="fas fa-fw fa-calendar-alt"></i> Gestión de Guardias</a></li>
+                    <li class="nav-item"><a class="nav-link" id="hours-report-tab" data-toggle="tab" href="#hours-report-panel" role="tab"><i class="fas fa-fw fa-clock"></i> Reporte de Horas</a></li>
+                    <li class="nav-item"><a class="nav-link" id="suplencias-tab" data-toggle="tab" href="#suplencias-panel" role="tab"><i class="fas fa-fw fa-user-friends"></i> Gestión de Suplencias</a></li>
+                    <li class="nav-item"><a class="nav-link" id="areas-tab" data-toggle="tab" href="#areas-panel" role="tab"><i class="fas fa-fw fa-sitemap"></i> Áreas de Trabajo</a></li>
+                    <li class="nav-item"><a class="nav-link" id="warnings-tab" data-toggle="tab" href="#warnings-panel" role="tab"><i class="fas fa-fw fa-exclamation-triangle"></i> Amonestaciones</a></li>
+                    <li class="nav-item"><a class="nav-link" id="audit-tab" data-toggle="tab" href="#audit-panel" role="tab"><i class="fas fa-fw fa-history"></i> Auditoría</a></li>
+                    <li class="nav-item"><a class="nav-link" id="delete-requests-tab" data-toggle="tab" href="#delete-requests-panel" role="tab"><i class="fas fa-fw fa-user-minus"></i> Solicitudes de Baja</a></li>
+                    <li class="nav-item"><a class="nav-link" id="access-rules-tab" data-toggle="tab" href="#access-rules-panel" role="tab"><i class="fas fa-fw fa-shield-alt"></i> Permisos de Acceso</a></li>
+                    <li class="nav-item"><a class="nav-link" id="admin-schedules-tab" data-toggle="tab" href="#admin-schedules-panel" role="tab"><i class="fas fa-fw fa-clock"></i> Validación de Horarios</a></li>
+                    <li class="nav-item"><a class="nav-link" id="reports-tab" data-toggle="tab" href="#reports-panel" role="tab"><i class="fas fa-fw fa-file-invoice"></i> Reportes e Informes</a></li>
+                    <li class="nav-item"><a class="nav-link" id="manual-requests-tab" data-toggle="tab" href="#manual-requests-panel" role="tab"><i class="fas fa-fw fa-clipboard-list"></i> Solicitudes de Registro</a></li>
+                </ul>
+
+                <!-- CONTENIDO DE LAS PESTAÑAS -->
+                <div class="tab-content" id="adminTabContent">
+                    
+                    <!-- 0. HOME PANEL -->
+                    <div class="tab-pane fade show active" id="home-panel" role="tabpanel">
+                        <div class="pt-4">
+                            <h4 class="text-gray-800 font-weight-bold mb-4"><i class="fas fa-home mr-2 text-primary"></i>Panel de Inicio</h4>
+                            <div class="row">
+                                <!-- Tarjeta: Dashboard -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-dashboard" style="display:none;">
+                                    <div class="card border-left-success shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#dashboard-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-tachometer-alt fa-3x text-success"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-success mb-1">Dashboard General</h6>
+                                                    <p class="text-muted small mb-0">Estadísticas y estado de asistencia en tiempo real.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Gestión de Usuarios -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-users" style="display:none;">
+                                    <div class="card border-left-primary shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#users-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-users-cog fa-3x text-primary"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-primary mb-1">Gestión de Usuarios</h6>
+                                                    <p class="text-muted small mb-0">Ver, registrar, editar y dar de baja personal.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Gestión de Permisos -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-permissions" style="display:none;">
+                                    <div class="card border-left-info shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#permissions-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-calendar-check fa-3x text-info"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-info mb-1">Gestión de Permisos</h6>
+                                                    <p class="text-muted small mb-0">Ver y autorizar solicitudes de permisos.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Gestión de Guardias -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-duties" style="display:none;">
+                                    <div class="card border-left-warning shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#duties-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-calendar-alt fa-3x text-warning"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-warning mb-1">Gestión de Guardias</h6>
+                                                    <p class="text-muted small mb-0">Planificación y turnos de guardias.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Reporte de Horas -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-hours-report" style="display:none;">
+                                    <div class="card border-left-secondary shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#hours-report-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-clock fa-3x text-secondary"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-secondary mb-1">Reporte de Horas</h6>
+                                                    <p class="text-muted small mb-0">Cálculo de horas laboradas y compensaciones.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Gestión de Suplencias -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-suplencias" style="display:none;">
+                                    <div class="card border-left-dark shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#suplencias-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-user-friends fa-3x text-dark"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-dark mb-1">Gestión de Suplencias</h6>
+                                                    <p class="text-muted small mb-0">Gestión y autorización de suplencias.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Áreas de Trabajo -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-areas" style="display:none;">
+                                    <div class="card border-left-primary shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#areas-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-sitemap fa-3x text-primary"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-primary mb-1">Áreas de Trabajo</h6>
+                                                    <p class="text-muted small mb-0">Configurar áreas y dependencias.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Amonestaciones -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-warnings" style="display:none;">
+                                    <div class="card border-left-danger shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#warnings-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-exclamation-triangle fa-3x text-danger"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-danger mb-1">Amonestaciones</h6>
+                                                    <p class="text-muted small mb-0">Verificar y sancionar atrasos o inasistencias.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Auditoría -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-audit" style="display:none;">
+                                    <div class="card border-left-secondary shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#audit-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-history fa-3x text-secondary"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-secondary mb-1">Auditoría</h6>
+                                                    <p class="text-muted small mb-0">Bitácora global de acciones del sistema.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Solicitudes de Baja -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-delete-requests" style="display:none;">
+                                    <div class="card border-left-danger shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#delete-requests-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-user-minus fa-3x text-danger"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-danger mb-1">Solicitudes de Baja</h6>
+                                                    <p class="text-muted small mb-0">Aprobar la desactivación de usuarios.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Permisos de Acceso -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-access-rules" style="display:none;">
+                                    <div class="card border-left-warning shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#access-rules-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-shield-alt fa-3x text-warning"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-warning mb-1">Permisos de Acceso</h6>
+                                                    <p class="text-muted small mb-0">Configuración dinámica de accesos por rol.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Validación de Horarios -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-admin-schedules" style="display:none;">
+                                    <div class="card border-left-info shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#admin-schedules-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-clock fa-3x text-info"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-info mb-1">Validación de Horarios</h6>
+                                                    <p class="text-muted small mb-0">Aprobación de horarios cargados por usuarios.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Reportes e Informes -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-reports" style="display:none;">
+                                    <div class="card border-left-success shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#reports-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-file-invoice fa-3x text-success"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-success mb-1">Reportes e Informes</h6>
+                                                    <p class="text-muted small mb-0">Generar informes avanzados para impresión/Excel.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Solicitudes de Registro -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="card-manual-requests" style="display:none;">
+                                    <div class="card border-left-info shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#manual-requests-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-clipboard-list fa-3x text-info"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-info mb-1">Solicitudes de Registro</h6>
+                                                    <p class="text-muted small mb-0">Verificar y autorizar asistencias manuales solicitadas.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1. DASHBOARD PANEL -->
+                    <div class="tab-pane fade" id="dashboard-panel" role="tabpanel">
+                        <div class="pt-4">
+                            <!-- Tarjetas de Estadísticas -->
+                            <div class="row">
+                                <div class="col-xl-3 col-md-6 mb-4"><div class="card border-left-primary shadow h-100 py-2"><div class="card-body"><div class="row no-gutters align-items-center"><div class="col mr-2"><div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Usuarios</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="stats-total-users">0</div></div><div class="col-auto"><i class="fas fa-users fa-2x text-gray-300"></i></div></div></div></div></div>
+                                <div class="col-xl-3 col-md-6 mb-4"><div class="card border-left-success shadow h-100 py-2"><div class="card-body"><div class="row no-gutters align-items-center"><div class="col mr-2"><div class="text-xs font-weight-bold text-success text-uppercase mb-1">Registros Hoy</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="stats-today-checks">0</div></div><div class="col-auto"><i class="fas fa-calendar-day fa-2x text-gray-300"></i></div></div></div></div></div>
+                                <div class="col-xl-3 col-md-6 mb-4"><div class="card border-left-info shadow h-100 py-2"><div class="card-body"><div class="row no-gutters align-items-center"><div class="col mr-2"><div class="text-xs font-weight-bold text-info text-uppercase mb-1">Registros (Filtro)</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="stats-total-checks">0</div></div><div class="col-auto"><i class="fas fa-clipboard-list fa-2x text-gray-300"></i></div></div></div></div></div>
+                                <div class="col-xl-3 col-md-6 mb-4"><div class="card border-left-warning shadow h-100 py-2"><div class="card-body"><div class="row no-gutters align-items-center"><div class="col mr-2"><div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Alertas (Fuera de Rango)</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="stats-outside-range">0</div></div><div class="col-auto"><i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i></div></div></div></div></div>
+                            </div>
+                            
+                            <!-- Widgets de Operación -->
+                            <div class="row">
+                                <!-- Código QR -->
+                                <div class="col-lg-4 mb-4">
+                                    <div class="card shadow mb-4">
+                                        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Código QR Maestro</h6></div>
+                                        <div class="card-body text-center">
+                                            <p class="small text-muted">Imprime este código y colócalo en la entrada.</p>
+                                            <div class="qr-code-wrapper"><div id="master-qrcode-container"></div><div id="master-qrcode-spinner" class="spinner-border text-primary" role="status"></div></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Sesiones Abiertas -->
+                                <div class="col-lg-4 mb-4">
+                                    <div class="card shadow mb-4 h-100">
+                                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                            <h6 class="m-0 font-weight-bold text-warning">Sesiones Abiertas (Dentro)</h6>
+                                            <button id="refresh-open-sessions-btn" class="btn btn-sm btn-light border shadow-sm" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                                        </div>
+                                        <div class="card-body p-0" style="max-height: 250px; overflow-y: auto;">
+                                            <div id="open-sessions-list" class="list-group list-group-flush"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Ausentes -->
+                                <div class="col-lg-4 mb-4">
+                                    <div class="card shadow mb-4 h-100">
+                                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                            <h6 class="m-0 font-weight-bold text-danger">Ausentes Hoy</h6>
+                                            <button id="refresh-absent-list-btn" class="btn btn-sm btn-light border shadow-sm" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                                        </div>
+                                        <div class="card-body p-0" style="max-height: 250px; overflow-y: auto;">
+                                            <div id="absent-today-list" class="list-group list-group-flush"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tabla General de Asistencias -->
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                    <h6 class="m-0 font-weight-bold text-primary">Registros de Asistencia</h6>
+                                    <button id="refresh-admin-attendance" class="btn btn-sm btn-light border shadow-sm" title="Recargar Tabla"><i class="fas fa-sync-alt text-primary"></i></button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3 align-items-end">
+                                        <div class="col-md-5"><label for="filter-start-date" class="small mb-0">Desde:</label><input type="date" id="filter-start-date" class="form-control form-control-sm"></div>
+                                        <div class="col-md-5"><label for="filter-end-date" class="small mb-0">Hasta:</label><input type="date" id="filter-end-date" class="form-control form-control-sm"></div>
+                                        <div class="col-md-2"><button id="clear-filter-btn" class="btn btn-secondary btn-sm w-100" title="Limpiar filtro"><i class="fas fa-times"></i> Limpiar</button></div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover" id="adminAttendanceTable" width="100%" cellspacing="0">
+                                            <thead><tr><th>Fecha y Hora</th><th>Nombre</th><th>Institución</th><th>Turno</th><th>Tipo</th><th>Estado</th><th>Dist. (m)</th></tr></thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 2. GESTIÓN DE USUARIOS PANEL -->
+                    <div class="tab-pane fade" id="users-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Listado de Personal</h6>
+                                <div>
+                                    <button id="backfill-dates-btn" class="btn btn-sm btn-outline-warning shadow-sm mr-2" title="Sincronizar fechas de ingreso con el primer registro de asistencia"><i class="fas fa-history"></i> Sincronizar Ingresos</button>
+                                    <button id="refresh-users" class="btn btn-sm btn-light border shadow-sm mr-2" title="Recargar Tabla"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    <button id="add-user-btn" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> Añadir Nuevo Usuario</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted">Añada, edite o elimine usuarios. También puede registrar manualmente la Entrada o Salida de cualquier usuario.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="usersTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Foto</th>
+                                                <th>Nombre</th>
+                                                <th>Email</th>
+                                                <th>Rol del Sistema</th>
+                                                <th>Sub-Rol</th>
+                                                <th>Áreas</th>
+                                                <th>Cédula</th>
+                                                <th>Institución</th>
+                                                <th>Nacimiento</th>
+                                                <th>Turno</th>
+                                                <th>Teléfono</th>
+                                                <th>Dirección</th>
+                                                <th>Estado</th>
+                                                <th>Desde</th>
+                                                <th>ID</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. GESTIÓN DE PERMISOS PANEL -->
+                    <div class="tab-pane fade" id="permissions-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Solicitudes y Permisos</h6>
+                                <div>
+                                    <button id="refresh-permissions" class="btn btn-sm btn-light border shadow-sm mr-2" title="Recargar Tabla"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    <button id="create-permission-btn" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> Crear Permiso Manual</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="adminPermissionsTable" width="100%" cellspacing="0">
+                                        <thead><tr><th>Usuario</th><th>Fechas</th><th>Tipo</th><th>Estado</th><th>Comentarios</th><th>Acciones</th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. GESTIÓN DE GUARDIAS PANEL -->
+                    <div class="tab-pane fade" id="duties-panel" role="tabpanel">
+                        <div class="row mt-4">
+                            <div class="col-lg-4">
+                                <div class="card shadow mb-4">
+                                    <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Asignar Guardia</h6></div>
+                                    <div class="card-body">
+                                        <form id="duty-form">
+                                            <div class="form-group">
+                                                <label>Fecha de Guardia</label>
+                                                <input type="date" id="duty-date" class="form-control form-control-sm" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Turno Requerido</label>
+                                                <select id="duty-turno" class="form-control form-control-sm" required>
+                                                    <option value="" disabled selected>Seleccione...</option>
+                                                    <option value="Mañana">Mañana</option>
+                                                    <option value="Tarde">Tarde</option>
+                                                    <option value="Mixto">Mixto</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Descripción de la Guardia</label>
+                                                <input type="text" id="duty-description" class="form-control form-control-sm" required placeholder="Ej: Guardia de Fin de Semana">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Categoría de la Guardia</label>
+                                                <select id="duty-category-select" class="form-control form-control-sm" required>
+                                                    <option value="" disabled selected>Seleccione...</option>
+                                                    <option value="Guardia Ordinaria">Guardia Ordinaria</option>
+                                                    <option value="Guardia de Fin de Semana">Guardia de Fin de Semana</option>
+                                                    <option value="Guardia Nocturna">Guardia Nocturna</option>
+                                                    <option value="Feriado">Feriado</option>
+                                                    <option value="Otros">Otros (Especificar...)</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group" id="duty-custom-category-group" style="display: none;">
+                                                <label>Especificar Nueva Categoría</label>
+                                                <input type="text" id="duty-custom-category" class="form-control form-control-sm" placeholder="Ej: Guardia Especial, Contingencia">
+                                            </div>
+                                            <button type="submit" id="save-duty-btn" class="btn btn-primary btn-block btn-sm">Guardar Guardia</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-8">
+                                <div class="card shadow mb-4">
+                                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                        <h6 class="m-0 font-weight-bold text-primary">Listado de Guardias Activas</h6>
+                                        <button id="refresh-duties" class="btn btn-sm btn-light border shadow-sm" title="Recargar Tabla"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered" id="dutiesTable" width="100%" cellspacing="0">
+                                                <thead><tr><th>Fecha</th><th>Turno Requerido</th><th>Descripción</th><th>Categoría</th><th>Creado por</th><th>Acciones</th></tr></thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 5. REPORTE DE HORAS PANEL -->
+                    <div class="tab-pane fade" id="hours-report-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Reporte General de Cumplimiento Laboral</h6>
+                                <div>
+                                    <button id="refresh-hours" class="btn btn-sm btn-light border shadow-sm mr-2" title="Recargar Tabla"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    <button id="export-complete-report-btn" class="btn btn-sm btn-success"><i class="fas fa-file-excel"></i> Exportar Reporte Completo</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted">Calcula el cumplimiento por empleado en un período. Toma en cuenta guardias y los cambios/suplencias (Cross de turno).</p>
+                                <div class="row mb-3 align-items-end bg-light p-3 border rounded">
+                                    <div class="col-md-5"><label for="hours-filter-start-date" class="small font-weight-bold mb-0">Desde:</label><input type="date" id="hours-filter-start-date" class="form-control form-control-sm"></div>
+                                    <div class="col-md-5"><label for="hours-filter-end-date" class="small font-weight-bold mb-0">Hasta:</label><input type="date" id="hours-filter-end-date" class="form-control form-control-sm"></div>
+                                    <div class="col-md-2"><button id="hours-clear-filter-btn" class="btn btn-secondary btn-sm w-100" title="Limpiar filtro"><i class="fas fa-redo"></i> Limpiar</button></div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="hoursReportTable" width="100%" cellspacing="0">
+                                        <thead><tr><th>Nombre</th><th>Institución</th><th>Turno</th><th>Días Trabajados</th><th>Días Ausente</th><th>Horas Totales</th><th>Acciones</th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. GESTIÓN DE SUPLENCIAS Y CROSS PANEL -->
+                    <div class="tab-pane fade" id="suplencias-panel" role="tabpanel">
+                        <div class="row mt-4">
+                            
+                            <!-- SECCIÓN: CROSS DE TURNO -->
+                            <div class="col-12 mb-4">
+                                <div class="card shadow">
+                                    <div class="card-header py-3 d-flex justify-content-between align-items-center bg-light">
+                                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-exchange-alt"></i> Cross de Turno (Cambio de Turno en el día)</h6>
+                                        <button id="refresh-cross" class="btn btn-sm btn-light border shadow-sm" title="Recargar Tabla"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small text-muted">Aplica un cambio rápido de turno entre dos operadores de turnos diferentes para un día específico.</p>
+                                        
+                                        <div class="row align-items-end mb-4 p-3 border rounded bg-white">
+                                            <div class="col-md-3">
+                                                <label class="small font-weight-bold">Fecha del Cambio:</label>
+                                                <input type="date" id="cross-date" class="form-control form-control-sm">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="small font-weight-bold">Operador 1:</label>
+                                                <select id="cross-user-1" class="form-control form-control-sm"></select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="small font-weight-bold">Operador 2:</label>
+                                                <select id="cross-user-2" class="form-control form-control-sm"></select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <button id="btn-register-cross" class="btn btn-primary btn-sm btn-block">
+                                                    <i class="fas fa-check"></i> Registrar Cross
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="table-responsive mt-3">
+                                            <table class="table table-bordered table-hover" id="crossTable" width="100%" cellspacing="0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Fecha</th>
+                                                        <th>Operador 1 (Turno)</th>
+                                                        <th>Operador 2 (Turno)</th>
+                                                        <th>Estado</th>
+                                                        <th>Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN: CONTROL DE SUPLENCIAS -->
+                            <div class="col-12">
+                                <div class="card shadow">
+                                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-user-friends"></i> Control de Suplencias Formales</h6>
+                                        <div>
+                                            <button id="refresh-substitutions" class="btn btn-sm btn-light border shadow-sm mr-2" title="Recargar Tabla"><i class="fas fa-sync-alt text-primary"></i></button>
+                                            <button id="add-substitution-btn" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> Nueva Suplencia</button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small text-muted">Gestión de ausencias cubiertas por otro operador de un turno diferente.</p>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover" id="substitutionsTable" width="100%" cellspacing="0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Titular</th>
+                                                        <th>Suplente</th>
+                                                        <th>Desde</th>
+                                                        <th>Hasta</th>
+                                                        <th>Turno a Suplir</th>
+                                                        <th>Estado</th>
+                                                        <th>Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- 7. ÁREAS DE TRABAJO PANEL -->
+                    <div class="tab-pane fade" id="areas-panel" role="tabpanel">
+                        <div class="row mt-4">
+                            <div class="col-lg-4">
+                                <div class="card shadow mb-4">
+                                    <div class="card-header py-3 bg-primary text-white"><h6 class="m-0 font-weight-bold"><i class="fas fa-plus-circle mr-1"></i> Crear Área de Trabajo</h6></div>
+                                    <div class="card-body">
+                                        <form id="area-form">
+                                            <div class="form-group">
+                                                <label class="small font-weight-bold">Nombre del Área</label>
+                                                <input type="text" id="form-area-name" class="form-control form-control-sm" required placeholder="Ej: Área E, Sector Norte...">
+                                            </div>
+                                            <button type="submit" id="save-area-btn" class="btn btn-primary btn-block btn-sm"><i class="fas fa-save mr-1"></i> Crear Área</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-8">
+                                <div class="card shadow mb-4">
+                                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-sitemap mr-1"></i> Áreas Configuradas</h6>
+                                        <button id="refresh-areas-btn" class="btn btn-sm btn-light border shadow-sm" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small text-muted">Las áreas se pueden renombrar en cualquier momento. Al desactivar un área, los usuarios que pertenecían a ella no serán eliminados.</p>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover" id="areasTable" width="100%" cellspacing="0">
+                                                <thead><tr><th>ID</th><th>Nombre del Área</th><th>Creado por</th><th>Acciones</th></tr></thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 8. AUDITORÍA PANEL -->
+                    <div class="tab-pane fade" id="audit-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-history mr-1"></i> Trazabilidad y Auditoría del Sistema</h6>
+                                <button id="refresh-audit-btn" class="btn btn-sm btn-light border shadow-sm" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3 align-items-end bg-light p-3 border rounded">
+                                    <div class="col-md-2"><label class="small font-weight-bold mb-0">Desde:</label><input type="date" id="audit-filter-start" class="form-control form-control-sm"></div>
+                                    <div class="col-md-2"><label class="small font-weight-bold mb-0">Hasta:</label><input type="date" id="audit-filter-end" class="form-control form-control-sm"></div>
+                                    <div class="col-md-2">
+                                        <label class="small font-weight-bold mb-0">Módulo:</label>
+                                        <select id="audit-filter-module" class="form-control form-control-sm">
+                                            <option value="">Todos</option>
+                                            <option value="Usuarios">Usuarios</option>
+                                            <option value="Permisos">Permisos</option>
+                                            <option value="Suplencias">Suplencias</option>
+                                            <option value="Guardias">Guardias</option>
+                                            <option value="CrossTurno">Cross Turno</option>
+                                            <option value="Areas">Áreas</option>
+                                            <option value="SolicitudesBaja">Sol. de Baja</option>
+                                            <option value="Asistencias">Asistencias</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="small font-weight-bold mb-0">Acción:</label>
+                                        <select id="audit-filter-action" class="form-control form-control-sm">
+                                            <option value="">Todas</option>
+                                            <option value="CREAR">CREAR</option>
+                                            <option value="MODIFICAR">MODIFICAR</option>
+                                            <option value="APROBAR">APROBAR</option>
+                                            <option value="RECHAZAR">RECHAZAR</option>
+                                            <option value="ELIMINAR">ELIMINAR</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="small font-weight-bold mb-0">&nbsp;</label>
+                                        <button id="apply-audit-filter-btn" class="btn btn-primary btn-sm btn-block"><i class="fas fa-search"></i> Filtrar</button>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="small font-weight-bold mb-0">&nbsp;</label>
+                                        <button id="clear-audit-filter-btn" class="btn btn-secondary btn-sm btn-block"><i class="fas fa-times"></i> Limpiar</button>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover table-sm" id="auditTable" width="100%" cellspacing="0">
+                                        <thead><tr><th>Fecha/Hora</th><th>Usuario</th><th>Sub-Rol</th><th>Acción</th><th>Módulo</th><th>Detalle</th><th>Resultado</th><th>Área(s)</th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 9. SOLICITUDES DE BAJA PANEL -->
+                    <div class="tab-pane fade" id="delete-requests-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-danger"><i class="fas fa-user-minus mr-1"></i> Solicitudes de Baja de Personal</h6>
+                                <button id="refresh-delete-requests-btn" class="btn btn-sm btn-light border shadow-sm" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted">Los Coordinadores de Área pueden solicitar la baja de un usuario de su área. Aquí el Coordinador General aprueba o rechaza esas solicitudes.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="deleteRequestsTable" width="100%" cellspacing="0">
+                                        <thead><tr><th>Fecha</th><th>Solicitante (Coordinador)</th><th>Usuario a Dar de Baja</th><th>Motivo</th><th>Estado</th><th>Acciones</th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 10. PERMISOS DE ACCESO PANEL -->
+                    <div class="tab-pane fade" id="access-rules-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-shield-alt mr-1"></i> Reglas de Acceso por Sub-Rol</h6>
+                                <button id="refresh-access-rules-btn" class="btn btn-sm btn-light border shadow-sm" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted">Configure qué acciones puede realizar cada Sub-Rol. Estas reglas son moldeables y pueden ser ajustadas por el Coordinador General en cualquier momento.</p>
+                                <div id="access-rules-container">
+                                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 8. AMONESTACIONES PANEL -->
+                    <div class="tab-pane fade" id="warnings-panel" role="tabpanel">
+                        <div class="row mt-4">
+                            <!-- Configuración de Horarios y Triggers -->
+                            <div class="col-xl-4 col-lg-5 mb-4">
+                                <div class="card shadow mb-4">
+                                    <div class="card-header py-3 bg-gradient-dark text-white d-flex justify-content-between align-items-center">
+                                        <h6 class="m-0 font-weight-bold"><i class="fas fa-clock mr-1"></i> Configuración de Horarios</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="config-horarios-form">
+                                            <div class="form-group mb-2">
+                                                <label class="small font-weight-bold mb-0">Entrada Mañana</label>
+                                                <input type="time" id="cfg-in-manana" class="form-control form-control-sm" required>
+                                            </div>
+                                            <div class="form-group mb-2">
+                                                <label class="small font-weight-bold mb-0">Salida Mañana</label>
+                                                <input type="time" id="cfg-out-manana" class="form-control form-control-sm" required>
+                                            </div>
+                                            <div class="form-group mb-2">
+                                                <label class="small font-weight-bold mb-0">Entrada Tarde</label>
+                                                <input type="time" id="cfg-in-tarde" class="form-control form-control-sm" required>
+                                            </div>
+                                            <div class="form-group mb-2">
+                                                <label class="small font-weight-bold mb-0">Salida Tarde</label>
+                                                <input type="time" id="cfg-out-tarde" class="form-control form-control-sm" required>
+                                            </div>
+                                            <div class="form-group mb-2">
+                                                <label class="small font-weight-bold mb-0">Entrada Mixto</label>
+                                                <input type="time" id="cfg-in-mixto" class="form-control form-control-sm" required>
+                                            </div>
+                                            <div class="form-group mb-2">
+                                                <label class="small font-weight-bold mb-0">Salida Mixto</label>
+                                                <input type="time" id="cfg-out-mixto" class="form-control form-control-sm" required>
+                                            </div>
+                                            <div class="form-group mb-3">
+                                                <label class="small font-weight-bold mb-0">Tolerancia Retardo (minutos)</label>
+                                                <input type="number" id="cfg-tolerancia" class="form-control form-control-sm" min="0" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-sm btn-block"><i class="fas fa-save mr-1"></i> Guardar Horarios</button>
+                                        </form>
+                                        <hr>
+                                        <div class="text-center">
+                                            <p class="small text-muted mb-2">Configurar Triggers automáticos en Google Apps Script</p>
+                                            <button id="setup-triggers-btn" class="btn btn-warning btn-sm btn-block text-dark font-weight-bold mb-3"><i class="fas fa-cog mr-1"></i> Instalar Triggers Automáticos</button>
+                                            <p class="small text-muted mb-2">Diagnóstico de Salud del Sistema</p>
+                                            <button id="btn-diagnostico-sistema" class="btn btn-info btn-sm btn-block font-weight-bold" onclick="ejecutarDiagnostico()"><i class="fas fa-stethoscope mr-1"></i> Diagnóstico del Sistema</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Estandarización de Base de Datos -->
+                                <div class="card shadow mb-4">
+                                    <div class="card-header py-3 bg-gradient-info text-white d-flex justify-content-between align-items-center">
+                                        <h6 class="m-0 font-weight-bold"><i class="fas fa-database mr-2"></i> Estandarización de Base de Datos</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-3">Herramientas para verificar y reparar la estructura de las hojas del sistema según el estándar <code>SYSTEM ASIS V1.xlsx</code>.</p>
+                                        <div class="d-flex flex-column gap-2 mb-3">
+                                            <button class="btn btn-outline-primary btn-sm mb-2" id="btn-verificar-estructura" onclick="verificarEstructura()"><i class="fas fa-search mr-1"></i> Verificar Estructura</button>
+                                            <button class="btn btn-outline-warning btn-sm mb-2" id="btn-reparar-estructura" onclick="repararEstructura()"><i class="fas fa-wrench mr-1"></i> Reparar Hojas Faltantes</button>
+                                            <button class="btn btn-outline-success btn-sm mb-2" id="btn-exportar-estructura" onclick="exportarEstructura()"><i class="fas fa-file-export mr-1"></i> Exportar Estructura (.xlsx)</button>
+                                        </div>
+                                        <div id="estructura-resultado" class="mt-2" style="display:none; max-height: 400px; overflow-y: auto;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Gestión de Tipos y Solicitudes de Anulación -->
+                            <div class="col-xl-8 col-lg-7 mb-4">
+                                <!-- Tipos de Amonestación -->
+                                <div class="card shadow mb-4">
+                                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-tags mr-1"></i> Tipos de Amonestaciones</h6>
+                                        <button id="new-warning-type-btn" class="btn btn-primary btn-sm"><i class="fas fa-plus mr-1"></i> Nuevo Tipo</button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover table-sm" id="warningTypesTable" width="100%" cellspacing="0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>ID</th>
+                                                        <th>Nombre</th>
+                                                        <th>Gravedad</th>
+                                                        <th>Auto</th>
+                                                        <th>Condición</th>
+                                                        <th>Estado</th>
+                                                        <th>Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Solicitudes de Anulación -->
+                                <div class="card shadow mb-4">
+                                    <div class="card-header py-3 bg-gradient-warning text-dark">
+                                        <h6 class="m-0 font-weight-bold"><i class="fas fa-undo mr-1"></i> Solicitudes de Anulación Pendientes</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover table-sm" id="adminAnulacionesTable" width="100%" cellspacing="0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Fecha</th>
+                                                        <th>Amonestación ID</th>
+                                                        <th>Coordinador</th>
+                                                        <th>Motivo</th>
+                                                        <th>Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Registro Completo de Amonestaciones -->
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-danger"><i class="fas fa-exclamation-triangle mr-1"></i> Registro General de Amonestaciones</h6>
+                                <div>
+                                    <button id="new-admin-warning-btn" class="btn btn-danger btn-sm mr-2"><i class="fas fa-plus mr-1"></i> Registrar Amonestación</button>
+                                    <button id="refresh-warnings-btn" class="btn btn-light btn-sm border" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3 align-items-end">
+                                    <div class="col-md-3">
+                                        <label class="small font-weight-bold mb-0">Filtrar por Usuario:</label>
+                                        <select id="warning-filter-user" class="form-control form-control-sm"></select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="small font-weight-bold mb-0">Estado:</label>
+                                        <select id="warning-filter-status" class="form-control form-control-sm">
+                                            <option value="">Todos</option>
+                                            <option value="Activa">Activas</option>
+                                            <option value="Anulada">Anuladas</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button id="apply-warning-filters-btn" class="btn btn-primary btn-sm mr-2"><i class="fas fa-search"></i> Filtrar</button>
+                                        <button id="clear-warning-filters-btn" class="btn btn-secondary btn-sm"><i class="fas fa-times"></i> Limpiar</button>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover table-sm" id="adminWarningsTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Fecha/Hora</th>
+                                                <th>Usuario</th>
+                                                <th>Tipo</th>
+                                                <th>Gravedad</th>
+                                                <th>Descripción</th>
+                                                <th>Creador</th>
+                                                <th>Origen</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 11. VALIDACIÓN DE HORARIOS PANEL (Admin) -->
+                    <div class="tab-pane fade" id="admin-schedules-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-clock mr-1"></i> Validación de Horarios de Clase</h6>
+                                <button id="admin-refresh-schedules-btn" class="btn btn-light btn-sm border" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover table-sm" id="adminSchedulesTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha Solicitud</th>
+                                                <th>Usuario</th>
+                                                <th>Áreas</th>
+                                                <th>Imagen / Comprobante</th>
+                                                <th>Carga Horaria</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card: Horarios de Clase Aprobados (Activos) -->
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-success"><i class="fas fa-calendar-check mr-1"></i> Horarios de Clase Aprobados (Activos)</h6>
+                                <button id="admin-refresh-approved-schedules-btn" class="btn btn-light btn-sm border" title="Recargar"><i class="fas fa-sync-alt text-success"></i></button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover table-sm" id="adminApprovedSchedulesTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Usuario</th>
+                                                <th>Áreas</th>
+                                                <th>Imagen Horario</th>
+                                                <th>Carga Horaria</th>
+                                                <th>Fecha Aprobación</th>
+                                                <th>Gracia (min)</th>
+                                                <th>Notas</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 13. REPORTES E INFORMES PANEL -->
+                    <div class="tab-pane fade" id="reports-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-file-invoice mr-1"></i> Generación de Informes y Reportes Consolidados</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted mb-4">Desde este panel puedes generar informes consolidados del personal en formatos Excel (.xlsx) y Word (.docx), abarcando múltiples módulos como amonestaciones, inasistencias, permisos, cross de turno, horas trabajadas y anomalías de marcado.</p>
+                                
+                                <div class="row">
+                                    <div class="col-lg-6 mb-4">
+                                        <div class="p-4 border rounded bg-gradient-light shadow-sm text-center h-100 d-flex flex-column justify-content-between">
+                                            <div>
+                                                <i class="fas fa-file-invoice-dollar fa-4x text-primary mb-3"></i>
+                                                <h5 class="font-weight-bold text-gray-800">Generar Reporte Completo</h5>
+                                                <p class="small text-muted">Abre el configurador para seleccionar el período de tiempo, los módulos específicos que deseas incluir y el formato de exportación.</p>
+                                            </div>
+                                            <div>
+                                                <button id="btn-generate-report-admin" class="btn btn-primary btn-block py-2 font-weight-bold shadow-sm"><i class="fas fa-cogs mr-1"></i> Abrir Generador de Reportes</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6 mb-4">
+                                        <div class="p-4 border rounded bg-gradient-light shadow-sm text-center h-100 d-flex flex-column justify-content-between">
+                                            <div>
+                                                <i class="fas fa-history fa-4x text-info mb-3"></i>
+                                                <h5 class="font-weight-bold text-gray-800">Sincronización de Ingresos</h5>
+                                                <p class="small text-muted">Calcula y rellena la fecha de inclusión de cada operador con el registro de su primera asistencia en el sistema. Util para reportes de inasistencias acumuladas.</p>
+                                            </div>
+                                            <div>
+                                                <button onclick="$('#backfill-dates-btn').trigger('click')" class="btn btn-outline-info btn-block py-2 font-weight-bold"><i class="fas fa-sync-alt mr-1"></i> Sincronizar Fechas</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 14. SOLICITUDES MANUALES PANEL -->
+                    <div class="tab-pane fade" id="manual-requests-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4 text-gray-800">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-clipboard-list mr-1"></i> Solicitudes de Registro Manual de Asistencia</h6>
+                                <button id="refresh-manual-requests-btn" class="btn btn-sm btn-primary btn-icon-split"><span class="icon text-white-50"><i class="fas fa-sync"></i></span><span class="text">Refrescar</span></button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped" id="adminManualRequestsTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha Solicitud</th>
+                                                <th>Usuario</th>
+                                                <th>Turno</th>
+                                                <th>Institución</th>
+                                                <th>Tipo</th>
+                                                <th>Motivo</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Se rellena dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================== -->
+<!-- ================= MODALES ==================== -->
+<!-- ============================================== -->
+
+<!-- Modal: Añadir/Editar Usuario -->
+<div class="modal fade" id="userModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="user-modal-title">Gestión de Usuario</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="user-form">
+                <div class="modal-body">
+                    <input type="hidden" id="form-user-id">
+                    <input type="hidden" id="form-user-foto-url">
+                    <div class="row">
+                        <!-- Carga de Foto -->
+                        <div class="col-md-12 mb-3 text-center">
+                            <div id="foto-preview-container" class="mb-2" style="display:none;">
+                                <!-- Agregamos clase cursor-pointer para indicar que es clickeable -->
+                                <img id="foto-preview" src="" alt="Foto" class="cursor-pointer" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer;" title="Haz clic para ampliar">
+                            </div>
+                            <label class="small font-weight-bold d-block text-left">Subir Foto de Perfil (Opcional)</label>
+                            <input type="file" id="form-user-foto-file" class="form-control-file border p-1 rounded" accept="image/*">
+                            <small class="text-muted text-left d-block mt-1">La foto se subirá automáticamente y se enlazará al perfil.</small>
+                        </div>
+
+                        <!-- Campos Normales -->
+                        <div class="col-md-6 form-group"><label class="small font-weight-bold">Nombre Completo</label><input type="text" id="form-user-name" class="form-control" required></div>
+                        <div class="col-md-6 form-group"><label class="small font-weight-bold">Cédula</label><input type="text" id="form-user-cedula" class="form-control"></div>
+                        <div class="col-md-6 form-group"><label class="small font-weight-bold">Email</label><input type="email" id="form-user-email" class="form-control" required></div>
+                        <div class="col-md-6 form-group"><label class="small font-weight-bold">Contraseña</label><input type="text" id="form-user-password" class="form-control"></div>
+                        
+                        <div class="col-md-6 form-group">
+                            <label class="small font-weight-bold">Fecha de Nacimiento</label>
+                            <input type="date" id="form-user-nacimiento" class="form-control">
+                        </div>
+                        <div class="col-md-6 form-group"><label class="small font-weight-bold">Teléfono</label><input type="text" id="form-user-telefono" class="form-control"></div>
+                        
+                        <div class="col-md-12 form-group"><label class="small font-weight-bold">Dirección</label><input type="text" id="form-user-direccion" class="form-control"></div>
+                        <div class="col-md-4 form-group"><label class="small font-weight-bold">Institución</label><input type="text" id="form-user-institucion" class="form-control"></div>
+                        
+                        <div class="col-md-4 form-group">
+                            <label class="small font-weight-bold">Rol del Sistema</label>
+                            <select id="form-user-role" class="form-control" required style="display:none;">
+                                <option value="Usuario">Usuario</option>
+                                <option value="Admin">Administrador</option>
+                            </select>
+                            <select id="form-user-subrol" class="form-control" required>
+                                <option value="Operador/a">Operador/a</option>
+                                <option value="Analista">Analista</option>
+                                <option value="Informático/a">Informático/a</option>
+                                <option value="Coordinador de Área">Coordinador de Área</option>
+                                <option value="Coordinador General">Coordinador General</option>
+                                <option value="SuperAdmin">SuperAdmin</option>
+                            </select>
+                            <small class="text-muted">Los Coordinadores tendrán acceso de Administrador</small>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label class="small font-weight-bold">Turno</label>
+                            <select id="form-user-turno" class="form-control" required>
+                                <option value="Mañana">Mañana</option>
+                                <option value="Tarde">Tarde</option>
+                                <option value="Mixto">Mixto</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label class="small font-weight-bold">Estado</label>
+                            <select id="form-user-estado" class="form-control" required>
+                                <option value="Activo">Activo</option>
+                                <option value="Inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label class="small font-weight-bold">Tolerancia Retardo Personalizada (min)</label>
+                            <input type="number" id="form-user-tolerancia" class="form-control" placeholder="Tolerancia del sistema">
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label class="small font-weight-bold">Fecha de Inclusión</label>
+                            <input type="date" id="form-user-inclusion" class="form-control">
+                            <small class="text-muted">Automática si se deja vacía al crear.</small>
+                        </div>
+                        <!-- Áreas de Trabajo (Multi-selección) -->
+                        <div class="col-md-12 form-group">
+                            <label class="small font-weight-bold"><i class="fas fa-sitemap mr-1 text-primary"></i> Áreas de Trabajo</label>
+                            <div id="areas-checkboxes-container" class="border rounded p-3 bg-light" style="max-height: 150px; overflow-y:auto;">
+                                <div class="text-muted small"><i class="fas fa-spinner fa-spin mr-1"></i> Cargando áreas...</div>
+                            </div>
+                            <small class="text-muted">El usuario verá todos los datos de las áreas seleccionadas (si es coordinador).</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button><button type="submit" id="save-user-btn" class="btn btn-primary">Guardar Cambios</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Permisos -->
+<div class="modal fade" id="adminPermissionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">Crear Permiso Manual</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div><form id="admin-permission-form"><div class="modal-body"><div class="form-group"><label>Usuario</label><select id="form-permission-user" class="form-control" required></select></div><div class="form-group"><label>Tipo de Permiso</label><select id="form-permission-type" class="form-control" required><option value="Médico">Médico</option><option value="Personal">Personal</option><option value="Vacaciones">Vacaciones</option><option value="Otro">Otro</option></select></div><div class="row"><div class="col-md-6 form-group"><label>Fecha Inicio</label><input type="date" id="form-permission-start-date" class="form-control" required></div><div class="col-md-6 form-group"><label>Fecha Fin</label><input type="date" id="form-permission-end-date" class="form-control" required></div></div><div class="form-group"><label>Comentarios</label><textarea id="form-permission-comments" class="form-control" rows="2"></textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button><button type="submit" id="save-permission-btn" class="btn btn-primary">Crear Permiso</button></div></form></div></div>
+</div>
+
+<!-- Modal: Crear Suplencia (Original) -->
+<div class="modal fade" id="substitutionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">Registrar Suplencia</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div><form id="substitution-form"><div class="modal-body"><div class="form-group"><label>Titular (Quien falta)</label><select id="sub-titular" class="form-control" required></select></div><div class="form-group"><label>Suplente (Quien cubre)</label><select id="sub-suplente" class="form-control" required></select></div><div class="row"><div class="col-md-6 form-group"><label>Fecha Inicio</label><input type="date" id="sub-start-date" class="form-control" required></div><div class="col-md-6 form-group"><label>Fecha Fin</label><input type="date" id="sub-end-date" class="form-control" required></div></div><div class="row"><div class="col-md-6 form-group"><label>Hora Inicio (Opcional)</label><input type="time" id="sub-start-time" class="form-control"></div><div class="col-md-6 form-group"><label>Hora Fin (Opcional)</label><input type="time" id="sub-end-time" class="form-control"></div></div><div class="form-group"><label>Comentarios</label><textarea id="sub-comentarios" class="form-control" rows="2"></textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button><button type="submit" id="save-substitution-btn" class="btn btn-primary">Registrar Suplencia</button></div></form></div></div>
+</div>
+
+<!-- Modal: Cierre Forzado -->
+<div class="modal fade" id="forceClockOutModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog"><div class="modal-content border-left-warning shadow"><div class="modal-header bg-warning text-white"><h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Forzar Cierre de Sesión</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div><form id="force-clock-out-form"><div class="modal-body"><p>Vas a cerrar manualmente la sesión de <strong id="force-user-name"></strong>.</p><p class="small text-muted mb-4">Hora de Entrada original: <span id="force-entry-time" class="font-weight-bold"></span></p><input type="hidden" id="force-user-id"><div class="row"><div class="col-md-6 form-group"><label>Fecha de Salida</label><input type="date" id="force-date" class="form-control" required></div><div class="col-md-6 form-group"><label>Hora de Salida</label><input type="time" id="force-time" class="form-control" required></div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button><button type="submit" id="save-force-clock-out-btn" class="btn btn-warning text-dark font-weight-bold">Aplicar Cierre</button></div></form></div></div>
+</div>
+
+<!-- Modal: Reporte Detallado -->
+<div class="modal fade" id="detailedReportModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="detailed-report-modal-title">Reporte Detallado</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div><div class="modal-body"><div class="p-3 mb-3 border rounded bg-light"><div class="row align-items-end"><div class="col-md-3"><label for="detail-start-date" class="small mb-0">Desde:</label><input type="date" id="detail-start-date" class="form-control form-control-sm"></div><div class="col-md-3"><label for="detail-end-date" class="small mb-0">Hasta:</label><input type="date" id="detail-end-date" class="form-control form-control-sm"></div><div class="col-md-3"><label class="small mb-0 d-block">&nbsp;</label><button id="detail-this-month-btn" class="btn btn-sm btn-info">Este Mes</button><button id="detail-last-month-btn" class="btn btn-sm btn-info">Mes Pasado</button></div><div class="col-md-3"><label class="small mb-0 d-block">&nbsp;</label><button id="detail-generate-report-btn" class="btn btn-primary btn-block"><i class="fas fa-sync-alt"></i> Generar</button></div></div></div><div class="row"><div class="col-lg-8"><h6 class="mb-2"><i class="fas fa-check-circle text-success"></i> Días Trabajados</h6><div class="table-responsive"><table class="table table-bordered table-hover" id="detailedReportTable" width="100%" cellspacing="0"><thead><tr><th>Fecha</th><th>Horas</th><th>Entradas</th><th>Salidas</th></tr></thead><tbody></tbody></table></div></div><div class="col-lg-4"><h6 class="mb-2"><i class="fas fa-times-circle text-danger"></i> Días Ausentes</h6><div id="absent-dates-list" class="list-group" style="max-height: 400px; overflow-y: auto;"></div></div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button></div></div></div>
+</div>
+
+<!-- Modal: Visor de Imágenes (NUEVO) -->
+<div class="modal fade" id="imageViewerModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content bg-transparent border-0">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="close text-white text-shadow-none" data-dismiss="modal" aria-label="Close" style="opacity: 1; text-shadow: none;">
+                    <span aria-hidden="true"><i class="fas fa-times fa-2x"></i></span>
+                </button>
+            </div>
+            <div class="modal-body text-center pt-0">
+                <img id="enlarged-image" src="" alt="Vista previa de perfil" class="img-fluid rounded shadow-lg" style="max-height: 80vh; object-fit: contain;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Renombrar Área -->
+<div class="modal fade" id="renameAreaModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fas fa-edit mr-1"></i> Renombrar Área</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="rename-area-form">
+                <div class="modal-body">
+                    <input type="hidden" id="rename-area-id">
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Nuevo Nombre del Área</label>
+                        <input type="text" id="rename-area-name" class="form-control" required placeholder="Nuevo nombre...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" id="save-rename-area-btn" class="btn btn-warning text-dark font-weight-bold">Guardar Nombre</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Resolver Solicitud de Baja -->
+<div class="modal fade" id="resolveDeleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-user-minus mr-1"></i> Resolver Solicitud de Baja</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="resolve-solicitud-id">
+                <p>Coordinador: <strong id="resolve-coordinador-name"></strong></p>
+                <p>Usuario a dar de baja: <strong id="resolve-target-name" class="text-danger"></strong></p>
+                <p class="small">Motivo: <em id="resolve-motivo"></em></p>
+                <div class="form-group">
+                    <label class="small font-weight-bold">Nota del Administrador (Opcional)</label>
+                    <textarea id="resolve-nota-admin" class="form-control" rows="3" placeholder="Justificación de la decisión..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button id="resolve-reject-btn" class="btn btn-warning text-dark"><i class="fas fa-times mr-1"></i> Rechazar</button>
+                <button id="resolve-approve-btn" class="btn btn-danger"><i class="fas fa-check mr-1"></i> Aprobar y Eliminar Usuario</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Crear/Editar Tipo de Amonestación -->
+<div class="modal fade" id="warningTypeModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="warning-type-modal-title"><i class="fas fa-tag mr-1"></i> Tipo de Amonestación</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="warning-type-form">
+                <div class="modal-body">
+                    <input type="hidden" id="form-warning-type-id">
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Nombre del Tipo</label>
+                        <input type="text" id="form-warning-type-name" class="form-control" required placeholder="Ej. Retardo Crónico">
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Descripción</label>
+                        <textarea id="form-warning-type-desc" class="form-control" rows="3" required placeholder="Explique en qué consiste..."></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label class="small font-weight-bold">Gravedad</label>
+                            <select id="form-warning-type-gravedad" class="form-control" required>
+                                <option value="Leve">Leve</option>
+                                <option value="Moderada">Moderada</option>
+                                <option value="Grave">Grave</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="small font-weight-bold">Estado</label>
+                            <select id="form-warning-type-status" class="form-control" required>
+                                <option value="Activo">Activo</option>
+                                <option value="Inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="form-warning-type-auto">
+                            <label class="custom-control-label small font-weight-bold" for="form-warning-type-auto">Activar automáticamente por el sistema</label>
+                        </div>
+                    </div>
+                    <div class="form-group" id="auto-condition-wrapper" style="display:none;">
+                        <label class="small font-weight-bold">Condición de Activación</label>
+                        <select id="form-warning-type-condicion" class="form-control">
+                            <option value="">Seleccione condición...</option>
+                            <option value="NO_REGISTRO_SALIDA">No registró salida</option>
+                            <option value="AUSENCIA_INJUSTIFICADA">Ausencia injustificada</option>
+                            <option value="LLEGADA_RETARDADA">Llegada tardía</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" id="save-warning-type-btn" class="btn btn-primary">Guardar Tipo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Registrar Amonestación Manual (Admin) -->
+<div class="modal fade" id="adminCreateWarningModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle mr-1"></i> Registrar Amonestación</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="admin-create-warning-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Usuario a Amonestar</label>
+                        <select id="form-admin-warning-user" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Tipo de Amonestación</label>
+                        <select id="form-admin-warning-type" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Descripción / Detalles adicionales</label>
+                        <textarea id="form-admin-warning-desc" class="form-control" rows="3" required placeholder="Indique la justificación o detalles del suceso..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" id="save-admin-warning-btn" class="btn btn-danger">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Resolver Solicitud de Anulación de Amonestación -->
+<div class="modal fade" id="resolveWarningAnulacionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fas fa-undo mr-1"></i> Resolver Solicitud de Anulación</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="resolve-wanul-id">
+                <p>Amonestación ID: <strong id="resolve-wanul-amon-id"></strong></p>
+                <p>Solicitante (Coordinador): <strong id="resolve-wanul-coord"></strong></p>
+                <p class="small">Motivo del Coordinador: <em id="resolve-wanul-motivo"></em></p>
+                <div class="form-group">
+                    <label class="small font-weight-bold">Nota / Justificación del Administrador</label>
+                    <textarea id="resolve-wanul-nota" class="form-control" rows="3" placeholder="Ej. Aprobada tras conversar con el operador..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button id="resolve-wanul-reject-btn" class="btn btn-warning text-dark"><i class="fas fa-times mr-1"></i> Rechazar</button>
+                <button id="resolve-wanul-approve-btn" class="btn btn-success"><i class="fas fa-check mr-1"></i> Aprobar y Anular</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Resolver Solicitud de Horario -->
+<div class="modal fade" id="resolveScheduleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-check-circle mr-1"></i> Validar Horario de Clases</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="resolve-schedule-form">
+                <input type="hidden" id="resolve-schedule-id">
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Left side: Image preview -->
+                        <div class="col-md-6 text-center border-right">
+                            <h6 class="font-weight-bold small text-gray-800">Comprobante de Horario</h6>
+                            <div class="p-2 border bg-light rounded mb-2">
+                                <img id="resolve-schedule-img" class="img-fluid cursor-pointer clickable-photo" style="max-height: 350px; cursor: pointer;" title="Haz clic para ampliar">
+                            </div>
+                            <a id="resolve-schedule-link" href="#" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-external-link-alt"></i> Abrir en pestaña nueva</a>
+                        </div>
+                        <!-- Right side: Details & Validation -->
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold small text-gray-800">Detalles de la Carga Horaria</h6>
+                            <div class="table-responsive mb-3" style="max-height: 200px;">
+                                <table class="table table-bordered table-sm small text-center mb-0">
+                                    <thead class="thead-light">
+                                        <tr><th>Día</th><th>Inicio</th><th>Fin</th></tr>
+                                    </thead>
+                                    <tbody id="resolve-schedule-slots-body"></tbody>
+                                </table>
+                            </div>
+                            <hr>
+                            <div class="form-group">
+                                <label class="small font-weight-bold text-gray-800">Tiempo de Gracia de Viaje/Traslado (minutos) <span class="text-danger">*</span></label>
+                                <input type="number" id="resolve-schedule-grace" class="form-control" min="0" required placeholder="Ej. 30, 45, 60">
+                                <small class="text-muted">Minutos que dispondrá el usuario después de clases para llegar a su puesto de trabajo.</small>
+                            </div>
+                            <div class="form-group">
+                                <label class="small font-weight-bold text-gray-800">Nota / Justificación / Feedback</label>
+                                <textarea id="resolve-schedule-comment" class="form-control" rows="2" placeholder="Opcional..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" id="resolve-schedule-reject-btn" class="btn btn-danger"><i class="fas fa-times mr-1"></i> Rechazar</button>
+                    <button type="submit" id="resolve-schedule-approve-btn" class="btn btn-success"><i class="fas fa-check mr-1"></i> Aprobar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

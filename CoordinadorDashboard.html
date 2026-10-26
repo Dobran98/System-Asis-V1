@@ -1,0 +1,783 @@
+<div id="wrapper">
+    <div id="content-wrapper" class="d-flex flex-column">
+        <div id="content">
+            <!-- Barra Superior -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                <h1 class="h3 mb-0 text-gray-800">Panel de Coordinador</h1>
+                <ul class="navbar-nav ml-auto">
+                    <!-- Botón de Mi Asistencia / Escaneo -->
+                    <li class="nav-item d-flex align-items-center mr-3">
+                        <button id="personal-attendance-btn" class="btn btn-sm btn-primary btn-icon-split shadow-sm" title="Mi Asistencia y Escaneo">
+                            <span class="icon text-white-50"><i class="fas fa-camera"></i></span>
+                            <span class="text d-none d-sm-inline">Mi Asistencia</span>
+                        </button>
+                    </li>
+                    <!-- Botón de Cambio de Tema -->
+                    <li class="nav-item d-flex align-items-center mr-3">
+                        <button id="theme-toggle-btn" class="btn btn-sm btn-dark btn-circle" onclick="toggleTheme()" title="Cambiar Tema">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </li>
+                    <li class="nav-item dropdown no-arrow">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown">
+                            <span class="mr-2 d-none d-lg-inline text-gray-600 small" id="user-name-display"></span>
+                            <img class="img-profile rounded-circle" src="https://startbootstrap.github.io/startbootstrap-sb-admin-2/img/undraw_profile.svg">
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in">
+                            <a class="dropdown-item" href="#" id="change-password-menu-btn">
+                                <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>Cambiar Contraseña
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#" id="logout-button">
+                                <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>Cerrar Sesión
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="container-fluid">
+                <!-- Identificador del Coordinador -->
+                <div class="alert alert-primary d-flex align-items-center mb-3 py-2" id="coord-area-badge-container">
+                    <i class="fas fa-sitemap mr-2"></i>
+                    <span id="coord-area-badge-text">Cargando áreas...</span>
+                </div>
+
+                <!-- PESTAÑAS DE NAVEGACIÓN -->
+                <ul class="nav nav-tabs" id="coordTab" role="tablist">
+                    <li class="nav-item"><a class="nav-link active" id="coord-home-tab" data-toggle="tab" href="#coord-home-panel" role="tab"><i class="fas fa-fw fa-home"></i> Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" id="coord-dashboard-tab" data-toggle="tab" href="#coord-dashboard-panel" role="tab"><i class="fas fa-fw fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" id="coord-users-tab" data-toggle="tab" href="#coord-users-panel" role="tab"><i class="fas fa-fw fa-users-cog"></i> Gestión de Personal</a></li>
+                    <li class="nav-item"><a class="nav-link" id="coord-permissions-tab" data-toggle="tab" href="#coord-permissions-panel" role="tab"><i class="fas fa-fw fa-calendar-check"></i> Permisos</a></li>
+                    <li class="nav-item"><a class="nav-link" id="coord-duties-tab" data-toggle="tab" href="#coord-duties-panel" role="tab"><i class="fas fa-fw fa-calendar-alt"></i> Guardias</a></li>
+                    <li class="nav-item"><a class="nav-link" id="coord-hours-tab" data-toggle="tab" href="#coord-hours-panel" role="tab"><i class="fas fa-fw fa-clock"></i> Reporte de Horas</a></li>
+                    <li class="nav-item"><a class="nav-link" id="coord-suplencias-tab" data-toggle="tab" href="#coord-suplencias-panel" role="tab"><i class="fas fa-fw fa-user-friends"></i> Suplencias</a></li>
+                    <li class="nav-item"><a class="nav-link" id="coord-warnings-tab" data-toggle="tab" href="#coord-warnings-panel" role="tab"><i class="fas fa-fw fa-exclamation-triangle"></i> Amonestaciones</a></li>
+                    <li class="nav-item"><a class="nav-link" id="coord-schedules-tab" data-toggle="tab" href="#coord-schedules-panel" role="tab"><i class="fas fa-fw fa-clock"></i> Validación de Horarios</a></li>
+                    <li class="nav-item"><a class="nav-link" id="coord-reports-tab" data-toggle="tab" href="#coord-reports-panel" role="tab"><i class="fas fa-fw fa-file-invoice"></i> Reportes e Informes</a></li>
+                    <li class="nav-item"><a class="nav-link" id="coord-manual-requests-tab" data-toggle="tab" href="#coord-manual-requests-panel" role="tab"><i class="fas fa-fw fa-clipboard-list"></i> Solicitudes de Registro</a></li>
+                </ul>
+
+                <div class="tab-content" id="coordTabContent">
+
+                    <!-- 0. COORD HOME PANEL -->
+                    <div class="tab-pane fade show active" id="coord-home-panel" role="tabpanel">
+                        <div class="pt-4">
+                            <h4 class="text-gray-800 font-weight-bold mb-4"><i class="fas fa-home mr-2 text-primary"></i>Panel de Inicio</h4>
+                            <div class="row">
+                                <!-- Tarjeta: Dashboard de Área -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="coord-card-dashboard" style="display:none;">
+                                    <div class="card border-left-success shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#coord-dashboard-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-tachometer-alt fa-3x text-success"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-success mb-1">Dashboard General</h6>
+                                                    <p class="text-muted small mb-0">Estadísticas y asistencia de área en tiempo real.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Gestión de Personal -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="coord-card-users" style="display:none;">
+                                    <div class="card border-left-primary shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#coord-users-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-users-cog fa-3x text-primary"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-primary mb-1">Gestión de Personal</h6>
+                                                    <p class="text-muted small mb-0">Ver, registrar y gestionar operadores y analistas.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Permisos -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="coord-card-permissions" style="display:none;">
+                                    <div class="card border-left-info shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#coord-permissions-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-calendar-check fa-3x text-info"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-info mb-1">Permisos de Área</h6>
+                                                    <p class="text-muted small mb-0">Aprobar o rechazar solicitudes de permisos.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Guardias -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="coord-card-duties" style="display:none;">
+                                    <div class="card border-left-warning shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#coord-duties-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-calendar-alt fa-3x text-warning"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-warning mb-1">Guardias de Área</h6>
+                                                    <p class="text-muted small mb-0">Planificación y turnos de guardias de área.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Reporte de Horas -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="coord-card-hours" style="display:none;">
+                                    <div class="card border-left-secondary shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#coord-hours-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-clock fa-3x text-secondary"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-secondary mb-1">Reporte de Horas</h6>
+                                                    <p class="text-muted small mb-0">Cálculo de horas laboradas de su personal.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Suplencias -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="coord-card-suplencias" style="display:none;">
+                                    <div class="card border-left-dark shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#coord-suplencias-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-user-friends fa-3x text-dark"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-dark mb-1">Suplencias de Área</h6>
+                                                    <p class="text-muted small mb-0">Verificar y autorizar suplencias del personal.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Amonestaciones -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="coord-card-warnings" style="display:none;">
+                                    <div class="card border-left-danger shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#coord-warnings-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-exclamation-triangle fa-3x text-danger"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-danger mb-1">Amonestaciones</h6>
+                                                    <p class="text-muted small mb-0">Ver y gestionar las sanciones de sus áreas.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Validación de Horarios -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="coord-card-schedules" style="display:none;">
+                                    <div class="card border-left-info shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#coord-schedules-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-clock fa-3x text-info"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-info mb-1">Validación de Horarios</h6>
+                                                    <p class="text-muted small mb-0">Aprobar horarios cargados por su personal.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Reportes e Informes -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="coord-card-reports" style="display:none;">
+                                    <div class="card border-left-success shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#coord-reports-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-file-invoice fa-3x text-success"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-success mb-1">Reportes e Informes</h6>
+                                                    <p class="text-muted small mb-0">Generar informes para su área.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Tarjeta: Solicitudes de Registro -->
+                                <div class="col-xl-4 col-md-6 mb-4" id="coord-card-manual-requests" style="display:none;">
+                                    <div class="card border-left-info shadow h-100 py-3 menu-card" style="cursor: pointer;" data-target="#coord-manual-requests-tab">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-3 text-center" style="max-width: 60px;">
+                                                    <i class="fas fa-clipboard-list fa-3x text-info"></i>
+                                                </div>
+                                                <div class="col">
+                                                    <h6 class="font-weight-bold text-info mb-1">Solicitudes de Registro</h6>
+                                                    <p class="text-muted small mb-0">Aprobar solicitudes de marcado manual.</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-chevron-right text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1. DASHBOARD PANEL -->
+                    <div class="tab-pane fade" id="coord-dashboard-panel" role="tabpanel">
+                        <div class="pt-4">
+                            <div class="row">
+                                <div class="col-xl-3 col-md-6 mb-4"><div class="card border-left-primary shadow h-100 py-2"><div class="card-body"><div class="row no-gutters align-items-center"><div class="col mr-2"><div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Personal en mi Área</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="coord-stats-total-users">0</div></div><div class="col-auto"><i class="fas fa-users fa-2x text-gray-300"></i></div></div></div></div></div>
+                                <div class="col-xl-3 col-md-6 mb-4"><div class="card border-left-success shadow h-100 py-2"><div class="card-body"><div class="row no-gutters align-items-center"><div class="col mr-2"><div class="text-xs font-weight-bold text-success text-uppercase mb-1">Registros Hoy (mi Área)</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="coord-stats-today-checks">-</div></div><div class="col-auto"><i class="fas fa-calendar-day fa-2x text-gray-300"></i></div></div></div></div></div>
+                                <div class="col-xl-3 col-md-6 mb-4"><div class="card border-left-warning shadow h-100 py-2"><div class="card-body"><div class="row no-gutters align-items-center"><div class="col mr-2"><div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Permisos Pendientes</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="coord-stats-pending-perms">0</div></div><div class="col-auto"><i class="fas fa-clock fa-2x text-gray-300"></i></div></div></div></div></div>
+                                <div class="col-xl-3 col-md-6 mb-4"><div class="card border-left-info shadow h-100 py-2"><div class="card-body"><div class="row no-gutters align-items-center"><div class="col mr-2"><div class="text-xs font-weight-bold text-info text-uppercase mb-1">Suplencias Pendientes</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="coord-stats-pending-subs">0</div></div><div class="col-auto"><i class="fas fa-user-friends fa-2x text-gray-300"></i></div></div></div></div></div>
+                            </div>
+
+                            <!-- Tabla de Asistencias del Área -->
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                    <h6 class="m-0 font-weight-bold text-primary">Registros de Asistencia — Mi Área</h6>
+                                    <button id="coord-refresh-attendance" class="btn btn-sm btn-light border shadow-sm" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3 align-items-end">
+                                        <div class="col-md-5"><label class="small mb-0">Desde:</label><input type="date" id="coord-filter-start-date" class="form-control form-control-sm"></div>
+                                        <div class="col-md-5"><label class="small mb-0">Hasta:</label><input type="date" id="coord-filter-end-date" class="form-control form-control-sm"></div>
+                                        <div class="col-md-2"><button id="coord-clear-filter-btn" class="btn btn-secondary btn-sm w-100"><i class="fas fa-times"></i> Limpiar</button></div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover" id="coordAttendanceTable" width="100%" cellspacing="0">
+                                            <thead><tr><th>Fecha y Hora</th><th>Nombre</th><th>Institución</th><th>Turno</th><th>Tipo</th><th>Estado</th><th>Dist. (m)</th></tr></thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. GESTIÓN DE PERSONAL (Solo su área) -->
+                    <div class="tab-pane fade" id="coord-users-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Personal de mi Área</h6>
+                                <div>
+                                    <button id="coord-refresh-users" class="btn btn-sm btn-light border shadow-sm mr-2" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    <button id="coord-add-user-btn" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> Añadir Personal</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted">Gestiona el personal de tu área. Para solicitar la baja de un usuario, usa el botón <span class="badge badge-danger"><i class="fas fa-user-minus"></i></span> en la tabla.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="coordUsersTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Foto</th><th>Nombre</th><th>Email</th><th>Sub-Rol</th>
+                                                <th>Cédula</th><th>Institución</th><th>Turno</th><th>Estado</th><th>Desde</th><th>ID</th><th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. PERMISOS -->
+                    <div class="tab-pane fade" id="coord-permissions-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Permisos del Personal de mi Área</h6>
+                                <div>
+                                    <button id="coord-refresh-permissions" class="btn btn-sm btn-light border shadow-sm mr-2"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    <button id="coord-create-permission-btn" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> Crear Permiso Manual</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="coordPermissionsTable" width="100%" cellspacing="0">
+                                        <thead><tr><th>Usuario</th><th>Fechas</th><th>Tipo</th><th>Estado</th><th>Comentarios</th><th>Acciones</th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. GUARDIAS -->
+                    <div class="tab-pane fade" id="coord-duties-panel" role="tabpanel">
+                        <div class="row mt-4">
+                            <div class="col-lg-4">
+                                <div class="card shadow mb-4">
+                                    <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Asignar Guardia</h6></div>
+                                    <div class="card-body">
+                                        <form id="coord-duty-form">
+                                            <div class="form-group"><label>Fecha</label><input type="date" id="coord-duty-date" class="form-control form-control-sm" required></div>
+                                            <div class="form-group"><label>Turno</label>
+                                                <select id="coord-duty-turno" class="form-control form-control-sm" required>
+                                                    <option value="" disabled selected>Seleccione...</option>
+                                                    <option>Mañana</option><option>Tarde</option><option>Mixto</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group"><label>Descripción</label><input type="text" id="coord-duty-description" class="form-control form-control-sm" required></div>
+                                            <button type="submit" id="coord-save-duty-btn" class="btn btn-primary btn-block btn-sm">Guardar Guardia</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-8">
+                                <div class="card shadow mb-4">
+                                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                        <h6 class="m-0 font-weight-bold text-primary">Guardias Activas</h6>
+                                        <button id="coord-refresh-duties" class="btn btn-sm btn-light border shadow-sm"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered" id="coordDutiesTable" width="100%" cellspacing="0">
+                                                <thead><tr><th>Fecha</th><th>Turno</th><th>Descripción</th><th>Creado por</th><th>Acciones</th></tr></thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. REPORTE DE HORAS -->
+                    <div class="tab-pane fade" id="coord-hours-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Reporte de Horas — Mi Área</h6>
+                                <button id="coord-refresh-hours" class="btn btn-sm btn-light border shadow-sm"><i class="fas fa-sync-alt text-primary"></i></button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3 align-items-end bg-light p-3 border rounded">
+                                    <div class="col-md-5"><label class="small font-weight-bold mb-0">Desde:</label><input type="date" id="coord-hours-start" class="form-control form-control-sm"></div>
+                                    <div class="col-md-5"><label class="small font-weight-bold mb-0">Hasta:</label><input type="date" id="coord-hours-end" class="form-control form-control-sm"></div>
+                                    <div class="col-md-2"><button id="coord-hours-clear" class="btn btn-secondary btn-sm w-100"><i class="fas fa-redo"></i> Limpiar</button></div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="coordHoursTable" width="100%" cellspacing="0">
+                                        <thead><tr><th>Nombre</th><th>Institución</th><th>Turno</th><th>Días Trabajados</th><th>Días Ausente</th><th>Horas Totales</th><th>Acciones</th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. SUPLENCIAS -->
+                    <div class="tab-pane fade" id="coord-suplencias-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Suplencias — Mi Área</h6>
+                                <div>
+                                    <button id="coord-refresh-substitutions" class="btn btn-sm btn-light border shadow-sm mr-2"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    <button id="coord-add-substitution-btn" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> Nueva Suplencia</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="coordSubstitutionsTable" width="100%" cellspacing="0">
+                                        <thead><tr><th>Titular</th><th>Suplente</th><th>Desde</th><th>Hasta</th><th>Turno</th><th>Estado</th><th>Acciones</th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 7. AMONESTACIONES PANEL (Coordinador) -->
+                    <div class="tab-pane fade" id="coord-warnings-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-danger"><i class="fas fa-exclamation-triangle mr-1"></i> Amonestaciones del Personal</h6>
+                                <div>
+                                    <button id="coord-new-warning-btn" class="btn btn-danger btn-sm mr-2"><i class="fas fa-plus mr-1"></i> Registrar Amonestación</button>
+                                    <button id="coord-refresh-warnings-btn" class="btn btn-light btn-sm border" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover table-sm" id="coordWarningsTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Fecha/Hora</th>
+                                                <th>Usuario</th>
+                                                <th>Tipo</th>
+                                                <th>Gravedad</th>
+                                                <th>Descripción</th>
+                                                <th>Creador</th>
+                                                <th>Origen</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 8. VALIDACIÓN DE HORARIOS PANEL (Coordinador) -->
+                    <div class="tab-pane fade" id="coord-schedules-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-clock mr-1"></i> Validación de Horarios de Clase</h6>
+                                <button id="coord-refresh-schedules-btn" class="btn btn-light btn-sm border" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover table-sm" id="coordSchedulesTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha Solicitud</th>
+                                                <th>Usuario</th>
+                                                <th>Áreas</th>
+                                                <th>Imagen / Comprobante</th>
+                                                <th>Carga Horaria</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card: Horarios de Clase Aprobados (Activos) -->
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-success"><i class="fas fa-calendar-check mr-1"></i> Horarios de Clase Aprobados (Activos)</h6>
+                                <button id="coord-refresh-approved-schedules-btn" class="btn btn-light btn-sm border" title="Recargar"><i class="fas fa-sync-alt text-success"></i></button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover table-sm" id="coordApprovedSchedulesTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Usuario</th>
+                                                <th>Áreas</th>
+                                                <th>Imagen Horario</th>
+                                                <th>Carga Horaria</th>
+                                                <th>Fecha Aprobación</th>
+                                                <th>Gracia (min)</th>
+                                                <th>Notas</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 9. REPORTES E INFORMES PANEL -->
+                    <div class="tab-pane fade" id="coord-reports-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-file-invoice mr-1"></i> Generación de Informes y Reportes Consolidados — Mi Área</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted mb-4">Desde este panel puedes generar informes consolidados del personal perteneciente a tu área de trabajo en formatos Excel (.xlsx) y Word (.docx), abarcando múltiples módulos como amonestaciones, inasistencias, permisos, cross de turno y anomalías de marcado.</p>
+                                
+                                <div class="row justify-content-center">
+                                    <div class="col-lg-8 mb-4">
+                                        <div class="p-4 border rounded bg-gradient-light shadow-sm text-center h-100 d-flex flex-column justify-content-between">
+                                            <div>
+                                                <i class="fas fa-file-invoice-dollar fa-4x text-primary mb-3"></i>
+                                                <h5 class="font-weight-bold text-gray-800">Generar Reporte de mi Área</h5>
+                                                <p class="small text-muted">Abre el configurador para seleccionar el período de tiempo, los módulos específicos que deseas incluir y el formato de exportación para el personal de tu área.</p>
+                                            </div>
+                                            <div>
+                                                <button id="btn-generate-report-coord" class="btn btn-primary btn-block py-2 font-weight-bold shadow-sm"><i class="fas fa-cogs mr-1"></i> Abrir Generador de Reportes</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 10. SOLICITUDES MANUALES PANEL (COORDINADOR) -->
+                    <div class="tab-pane fade" id="coord-manual-requests-panel" role="tabpanel">
+                        <div class="card shadow mb-4 mt-4 text-gray-800">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-clipboard-list mr-1"></i> Solicitudes de Registro Manual de Asistencia (Mi Área)</h6>
+                                <button id="refresh-coord-manual-requests-btn" class="btn btn-sm btn-primary btn-icon-split"><span class="icon text-white-50"><i class="fas fa-sync"></i></span><span class="text">Refrescar</span></button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped" id="coordManualRequestsTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha Solicitud</th>
+                                                <th>Usuario</th>
+                                                <th>Turno</th>
+                                                <th>Institución</th>
+                                                <th>Tipo</th>
+                                                <th>Motivo</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Se rellena dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Añadir/Editar Usuario (Coordinador) -->
+<div class="modal fade" id="coordUserModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="coord-user-modal-title">Gestión de Usuario</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="coord-user-form">
+                <div class="modal-body">
+                    <input type="hidden" id="coord-form-user-id">
+                    <input type="hidden" id="coord-form-user-foto-url">
+                    <input type="hidden" id="coord-form-user-role" value="Usuario">
+                    <div class="row">
+                        <div class="col-md-6 form-group"><label class="small font-weight-bold">Nombre Completo</label><input type="text" id="coord-form-user-name" class="form-control" required></div>
+                        <div class="col-md-6 form-group"><label class="small font-weight-bold">Cédula</label><input type="text" id="coord-form-user-cedula" class="form-control"></div>
+                        <div class="col-md-6 form-group"><label class="small font-weight-bold">Email</label><input type="email" id="coord-form-user-email" class="form-control" required></div>
+                        <div class="col-md-6 form-group"><label class="small font-weight-bold">Contraseña</label><input type="text" id="coord-form-user-password" class="form-control"></div>
+                        <div class="col-md-6 form-group"><label class="small font-weight-bold">Teléfono</label><input type="text" id="coord-form-user-telefono" class="form-control"></div>
+                        <div class="col-md-6 form-group"><label class="small font-weight-bold">Institución</label><input type="text" id="coord-form-user-institucion" class="form-control"></div>
+                        <div class="col-md-12 form-group"><label class="small font-weight-bold">Dirección</label><input type="text" id="coord-form-user-direccion" class="form-control"></div>
+                        <div class="col-md-4 form-group">
+                            <label class="small font-weight-bold">Sub-Rol</label>
+                            <select id="coord-form-user-subrol" class="form-control">
+                                <option value="Operador/a">Operador/a</option>
+                                <option value="Analista">Analista</option>
+                                <option value="Informático/a">Informático/a</option>
+                            </select>
+                            <small class="text-muted">Los Coordinadores solo pueden crear Operadores/Analistas/Informáticos</small>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label class="small font-weight-bold">Turno</label>
+                            <select id="coord-form-user-turno" class="form-control" required>
+                                <option value="Mañana">Mañana</option>
+                                <option value="Tarde">Tarde</option>
+                                <option value="Mixto">Mixto</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label class="small font-weight-bold">Estado</label>
+                            <select id="coord-form-user-estado" class="form-control">
+                                <option value="Activo">Activo</option>
+                                <option value="Inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label class="small font-weight-bold">Tolerancia Retardo Personalizada (min)</label>
+                            <input type="number" id="coord-form-user-tolerancia" class="form-control" placeholder="Tolerancia del sistema">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button><button type="submit" id="coord-save-user-btn" class="btn btn-primary">Guardar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Solicitar Baja (Coordinador) -->
+<div class="modal fade" id="requestDeleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-user-minus mr-1"></i> Solicitar Baja de Usuario</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="delete-request-target-id">
+                <p>Solicitando baja para: <strong id="delete-request-target-name" class="text-danger"></strong></p>
+                <div class="form-group">
+                    <label class="small font-weight-bold">Motivo de la Solicitud <span class="text-danger">*</span></label>
+                    <textarea id="delete-request-motivo" class="form-control" rows="4" required placeholder="Explique el motivo por el que solicita la baja del usuario..."></textarea>
+                </div>
+                <p class="small text-muted"><i class="fas fa-info-circle mr-1"></i>Esta solicitud será revisada y aprobada/rechazada por el Coordinador General.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button id="submit-delete-request-btn" class="btn btn-danger"><i class="fas fa-paper-plane mr-1"></i> Enviar Solicitud</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Permiso Manual (Coordinador) -->
+<div class="modal fade" id="coordPermissionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">Crear Permiso Manual</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div><form id="coord-permission-form"><div class="modal-body"><div class="form-group"><label>Usuario de mi Área</label><select id="coord-form-permission-user" class="form-control" required></select></div><div class="form-group"><label>Tipo de Permiso</label><select id="coord-form-permission-type" class="form-control" required><option value="Médico">Médico</option><option value="Personal">Personal</option><option value="Vacaciones">Vacaciones</option><option value="Otro">Otro</option></select></div><div class="row"><div class="col-md-6 form-group"><label>Fecha Inicio</label><input type="date" id="coord-form-permission-start" class="form-control" required></div><div class="col-md-6 form-group"><label>Fecha Fin</label><input type="date" id="coord-form-permission-end" class="form-control" required></div></div><div class="form-group"><label>Comentarios</label><textarea id="coord-form-permission-comments" class="form-control" rows="2"></textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button><button type="submit" id="coord-save-permission-btn" class="btn btn-primary">Crear Permiso</button></div></form></div></div>
+</div>
+
+<!-- Modal: Crear Suplencia (Coordinador) -->
+<div class="modal fade" id="coordSubstitutionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">Registrar Suplencia</h5><button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button></div><form id="coord-substitution-form"><div class="modal-body"><div class="form-group"><label>Titular (Quien falta)</label><select id="coord-sub-titular" class="form-control" required></select></div><div class="form-group"><label>Suplente (Quien cubre)</label><select id="coord-sub-suplente" class="form-control" required></select></div><div class="row"><div class="col-md-6 form-group"><label>Fecha Inicio</label><input type="date" id="coord-sub-start-date" class="form-control" required></div><div class="col-md-6 form-group"><label>Fecha Fin</label><input type="date" id="coord-sub-end-date" class="form-control" required></div></div><div class="form-group"><label>Comentarios</label><textarea id="coord-sub-comentarios" class="form-control" rows="2"></textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button><button type="submit" id="coord-save-substitution-btn" class="btn btn-primary">Registrar Suplencia</button></div></form></div></div>
+</div>
+
+<!-- Modal: Registrar Amonestación Manual (Coordinador) -->
+<div class="modal fade" id="coordCreateWarningModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle mr-1"></i> Registrar Amonestación</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="coord-create-warning-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Usuario de mi Área</label>
+                        <select id="form-coord-warning-user" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Tipo de Amonestación</label>
+                        <select id="form-coord-warning-type" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Descripción / Detalles</label>
+                        <textarea id="form-coord-warning-desc" class="form-control" rows="3" required placeholder="Indique la justificación..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" id="save-coord-warning-btn" class="btn btn-danger">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Solicitar Anulación de Amonestación -->
+<div class="modal fade" id="coordRequestAnulacionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fas fa-undo mr-1"></i> Solicitar Anulación de Amonestación</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="coord-request-anulacion-form">
+                <div class="modal-body">
+                    <input type="hidden" id="coord-anul-amon-id">
+                    <p>Vas a solicitar la anulación de la amonestación <strong id="coord-anul-amon-display"></strong>.</p>
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Motivo / Justificación de la Solicitud <span class="text-danger">*</span></label>
+                        <textarea id="coord-anul-motivo" class="form-control" rows="3" required placeholder="Ej. El usuario presentó justificativo médico tardío..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" id="submit-coord-anul-btn" class="btn btn-warning text-dark font-weight-bold">Enviar Solicitud</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Resolver Solicitud de Horario -->
+<div class="modal fade" id="resolveScheduleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-check-circle mr-1"></i> Validar Horario de Clases</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="resolve-schedule-form">
+                <input type="hidden" id="resolve-schedule-id">
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Left side: Image preview -->
+                        <div class="col-md-6 text-center border-right">
+                            <h6 class="font-weight-bold small text-gray-800">Comprobante de Horario</h6>
+                            <div class="p-2 border bg-light rounded mb-2">
+                                <img id="resolve-schedule-img" class="img-fluid cursor-pointer clickable-photo" style="max-height: 350px; cursor: pointer;" title="Haz clic para ampliar">
+                            </div>
+                            <a id="resolve-schedule-link" href="#" target="_blank" class="btn btn-sm btn-outline-info"><i class="fas fa-external-link-alt"></i> Abrir en pestaña nueva</a>
+                        </div>
+                        <!-- Right side: Details & Validation -->
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold small text-gray-800">Detalles de la Carga Horaria</h6>
+                            <div class="table-responsive mb-3" style="max-height: 200px;">
+                                <table class="table table-bordered table-sm small text-center mb-0">
+                                    <thead class="thead-light">
+                                        <tr><th>Día</th><th>Inicio</th><th>Fin</th></tr>
+                                    </thead>
+                                    <tbody id="resolve-schedule-slots-body"></tbody>
+                                </table>
+                            </div>
+                            <hr>
+                            <div class="form-group">
+                                <label class="small font-weight-bold text-gray-800">Tiempo de Gracia de Viaje/Traslado (minutos) <span class="text-danger">*</span></label>
+                                <input type="number" id="resolve-schedule-grace" class="form-control" min="0" required placeholder="Ej. 30, 45, 60">
+                                <small class="text-muted">Minutos que dispondrá el usuario después de clases para llegar a su puesto de trabajo.</small>
+                            </div>
+                            <div class="form-group">
+                                <label class="small font-weight-bold text-gray-800">Nota / Justificación / Feedback</label>
+                                <textarea id="resolve-schedule-comment" class="form-control" rows="2" placeholder="Opcional..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" id="resolve-schedule-reject-btn" class="btn btn-danger"><i class="fas fa-times mr-1"></i> Rechazar</button>
+                    <button type="submit" id="resolve-schedule-approve-btn" class="btn btn-success"><i class="fas fa-check mr-1"></i> Aprobar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

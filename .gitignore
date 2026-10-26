@@ -1,0 +1,44 @@
+# Dependencias
+node_modules/
+.pnp/
+.pnp.js
+
+# Entornos y credenciales privadas
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+credentials.json
+
+# Despliegues y compilación
+.vercel
+dist/
+build/
+.next/
+out/
+
+# Clasp / Google Apps Script tokens privados
+.clasprc.json
+
+# Registros y logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Archivos de sistema operativo y editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporales de IDE / Gemini
+.agents/
+.gemini/
+scratch/

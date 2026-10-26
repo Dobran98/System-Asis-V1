@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Sistema de Control de Asistencia QR — Asys Constructora">
+    <title>Sistema de Asistencia</title>
+
+    <!-- Librerías CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css" rel="stylesheet">
+    
+    <!-- CSS para DataTables y Botones -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
+    
+    <?!= include('Stylesheet'); ?>
+</head>
+
+<body id="page-top">
+
+    <!-- Contenedor principal de la aplicación -->
+    <div id="app-container"></div>
+
+    <!-- Modal GPS eliminado — v2.0: El sistema ya no requiere geolocalización para el registro de asistencia -->
+
+    <!-- Modal de Asistencia Personal y Escáner QR (Para Coordinadores, Analistas y Admins) -->
+    <div class="modal fade" id="personalAttendanceModal" tabindex="-1" role="dialog" aria-labelledby="personalAttendanceModalLabel" aria-hidden="true" data-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title font-weight-bold" id="personalAttendanceModalLabel"><i class="fas fa-camera mr-2"></i> Mi Asistencia y Escaneo QR</h5>
+                    <button class="close text-white" type="button" data-dismiss="modal" aria-label="Close" id="close-modal-attendance-btn">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- ESCÁNER QR EN MODAL -->
+                        <div class="col-md-5 mb-3 mb-md-0 border-right">
+                            <div class="text-center">
+                                <h6 class="font-weight-bold text-primary mb-2">Escanear Código QR</h6>
+                                <h5 class="font-weight-bold mb-3" id="modal-user-status-display">
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando...
+                                </h5>
+                                <p class="small text-muted mb-3">Escanea el código QR de la oficina para registrar Entrada o Salida.</p>
+                                
+                                <div id="modal-qr-scanner-container" class="my-3" style="width: 100%; max-width: 320px; margin: auto; display: none;">
+                                    <div id="modal-qr-reader" style="width: 100%;"></div>
+                                </div>
+                                
+                                <div id="modal-action-buttons">
+                                    <button id="modal-scan-check-in" class="btn btn-success btn-sm btn-icon-split mb-2 w-100"><span class="icon text-white-50"><i class="fas fa-sign-in-alt"></i></span><span class="text">Entrada</span></button>
+                                    <button id="modal-scan-check-out" class="btn btn-danger btn-sm btn-icon-split w-100"><span class="icon text-white-50"><i class="fas fa-sign-out-alt"></i></span><span class="text">Salida</span></button>
+                                </div>
+                                
+                                <button id="modal-stop-scan-button" class="btn btn-secondary btn-sm mt-2 w-100" style="display: none;"><i class="fas fa-stop-circle"></i> Detener Cámara</button>
+                                
+                                <div id="modal-scan-spinner" class="mt-3" style="display: none;">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    <p class="small mt-1 text-primary">Procesando registro...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- HISTORIAL DE ASISTENCIA EN MODAL -->
+                        <div class="col-md-7">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="font-weight-bold text-primary m-0">Mis Asistencias Recientes</h6>
+                                <div>
+                                    <button id="modal-download-full-history-btn" class="btn btn-sm btn-success border shadow-sm mr-1" title="Descargar Historial Completo (Excel)"><i class="fas fa-file-excel"></i> Descargar Todo</button>
+                                    <button id="modal-refresh-table-button" class="btn btn-sm btn-light border" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm table-hover" id="modalUserAttendanceTable" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha y Hora</th>
+                                            <th>Tipo</th>
+                                            <th>Estado</th>
+                                            <th>Dist. (m)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Horario Aprobado (Admin / Coordinadores) -->
+    <div class="modal fade" id="editApprovedScheduleModal" tabindex="-1" role="dialog" aria-labelledby="editApprovedScheduleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title font-weight-bold" id="editApprovedScheduleModalLabel"><i class="fas fa-edit mr-2"></i> Editar Horario de Clase Aprobado</h5>
+                    <button class="close text-white" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <form id="edit-approved-schedule-form">
+                    <div class="modal-body">
+                        <input type="hidden" id="edit-sched-id">
+                        <div class="form-group">
+                            <label class="small font-weight-bold">Usuario</label>
+                            <input type="text" id="edit-sched-username" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="small font-weight-bold">Tiempo de Gracia Aprobado (minutos)</label>
+                            <input type="number" id="edit-sched-grace" class="form-control" min="0" required>
+                            <small class="form-text text-muted">Minutos de tolerancia adicionales concedidos a este usuario para sus clases.</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="small font-weight-bold">Notas del Administrador / Coordinador</label>
+                            <textarea id="edit-sched-notes" class="form-control" rows="3" placeholder="Ej. Aprobado según constancia de estudios adjunta..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary btn-sm" type="button" data-dismiss="modal">Cancelar</button>
+                        <button class="btn btn-success btn-sm" type="submit" id="edit-approved-sched-save-btn">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Librerías JS Principales -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
+    
+    <!-- Librerías para DataTables con EXPORTACIÓN -->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+    <!-- Librerías de QR -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8" type="text/javascript"></script>
+
+    <!-- SheetJS (xlsx.full.min.js) para reportes Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- docx.js para reportes Word -->
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.2.4/build/index.umd.js"></script>
+
+    <!-- Modal Global: Generador de Reportes -->
+    <div class="modal fade" id="reportGeneratorModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content border-0">
+                <div class="modal-header bg-gradient-primary text-white">
+                    <h5 class="modal-title font-weight-bold"><i class="fas fa-file-invoice mr-2"></i> Generador de Reportes</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form id="report-generator-form">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label class="small font-weight-bold">Fecha Inicio</label>
+                                <input type="date" id="rep-start-date" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="small font-weight-bold">Fecha Fin</label>
+                                <input type="date" id="rep-end-date" class="form-control" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label class="small font-weight-bold d-block mb-1">Preconfiguraciones de Período</label>
+                            <div class="btn-group btn-group-sm w-100" role="group">
+                                <button type="button" class="btn btn-outline-info rep-period-preset" data-preset="this-month">Este Mes</button>
+                                <button type="button" class="btn btn-outline-info rep-period-preset" data-preset="last-month">Mes Pasado</button>
+                                <button type="button" class="btn btn-outline-info rep-period-preset" data-preset="this-quarter">Trimestre</button>
+                                <button type="button" class="btn btn-outline-info rep-period-preset" data-preset="this-year">Año</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="small font-weight-bold mb-0"><i class="fas fa-tasks mr-1"></i> Módulos a Incluir</label>
+                                <div>
+                                    <button type="button" class="btn btn-link btn-sm p-0 mr-2 small text-primary font-weight-bold" id="rep-select-all-btn" style="text-decoration: none;">Incluir todos</button>
+                                    <button type="button" class="btn btn-link btn-sm p-0 small text-danger font-weight-bold" id="rep-deselect-all-btn" style="text-decoration: none;">Quitar todos</button>
+                                </div>
+                            </div>
+                            <div class="border rounded p-3 bg-light" style="max-height: 180px; overflow-y: auto;">
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input rep-section-chk" id="rep-sec-resumen" value="resumen" checked disabled>
+                                    <label class="custom-control-label small font-weight-bold" for="rep-sec-resumen">Resumen General (Obligatorio)</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input rep-section-chk" id="rep-sec-amonestaciones" value="amonestaciones" checked>
+                                    <label class="custom-control-label small" for="rep-sec-amonestaciones">Amonestaciones (desglosado por tipo)</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input rep-section-chk" id="rep-sec-inasistencias" value="inasistencias" checked>
+                                    <label class="custom-control-label small" for="rep-sec-inasistencias">Inasistencias y asistencia %</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input rep-section-chk" id="rep-sec-retrasos" value="retrasos" checked>
+                                    <label class="custom-control-label small" for="rep-sec-retrasos">Llegadas Tarde (tiempo de retraso)</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input rep-section-chk" id="rep-sec-permisos" value="permisos" checked>
+                                    <label class="custom-control-label small" for="rep-sec-permisos">Permisos Solicitados y Aprobados</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input rep-section-chk" id="rep-sec-crossturnos" value="crossturnos" checked>
+                                    <label class="custom-control-label small" for="rep-sec-crossturnos">Cross de Turno (cubrimientos)</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input rep-section-chk" id="rep-sec-horas" value="horas" checked>
+                                    <label class="custom-control-label small" for="rep-sec-horas">Horas Trabajadas y Diferencia</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input rep-section-chk" id="rep-sec-anomalias" value="anomalias" checked>
+                                    <label class="custom-control-label small" for="rep-sec-anomalias">Anomalías (sin salida, fuera de rango)</label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input rep-section-chk" id="rep-sec-guardias" value="guardias" checked>
+                                    <label class="custom-control-label small" for="rep-sec-guardias">Guardias y Asistencias Especiales</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="small font-weight-bold"><i class="fas fa-file-download mr-1"></i> Formato de Exportación</label>
+                            <select id="rep-format" class="form-control form-control-sm">
+                                <option value="xlsx">Excel (.xlsx) - Libro Multihoja</option>
+                                <option value="docx">Word (.docx) - Informe Estructurado</option>
+                                <option value="both">Ambos Formatos (Descarga conjunta)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-top-0 d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="submit" id="rep-generate-btn" class="btn btn-sm btn-primary px-4"><i class="fas fa-cog fa-spin mr-1 d-none" id="rep-spinner"></i> Generar Informe</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Solicitar Asistencia Manual -->
+    <div class="modal fade" id="requestManualCheckModal" tabindex="-1" role="dialog" aria-labelledby="requestManualCheckModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title font-weight-bold" id="requestManualCheckModalLabel"><i class="fas fa-clipboard-list mr-2"></i> Solicitar Registro Manual</h5>
+                    <button class="close text-white" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <form id="manual-check-request-form">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="manual-check-type" class="small font-weight-bold">Tipo de Registro:</label>
+                            <select id="manual-check-type" class="form-control" required>
+                                <option value="" disabled selected>Seleccione tipo...</option>
+                                <option value="Entrada">Entrada</option>
+                                <option value="Salida">Salida</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual-check-reason" class="small font-weight-bold">Motivo de la Solicitud:</label>
+                            <textarea id="manual-check-reason" class="form-control" rows="3" placeholder="Explique brevemente por qué no puede registrar su asistencia mediante escaneo QR (ej: problemas de cámara, geolocalización, etc.)..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="submit" id="submit-manual-check-btn" class="btn btn-info"><i class="fas fa-paper-plane mr-1"></i> Enviar Solicitud</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Cambiar Contraseña de Acceso -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" role="dialog" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-gradient-primary text-white">
+                    <h5 class="modal-title font-weight-bold" id="changePasswordModalLabel">
+                        <i class="fas fa-key mr-2"></i> Cambiar Contraseña de Acceso
+                    </h5>
+                    <button class="close text-white" type="button" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <form id="change-password-form">
+                    <div class="modal-body">
+                        <div class="alert alert-info py-2 px-3 small mb-3">
+                            <i class="fas fa-info-circle mr-1"></i> La nueva contraseña debe tener un mínimo de 4 caracteres.
+                        </div>
+                        <div class="form-group">
+                            <label for="current-password" class="small font-weight-bold">Contraseña Actual:</label>
+                            <div class="input-group">
+                                <input type="password" id="current-password" class="form-control" placeholder="Ingrese su contraseña actual" required>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary toggle-password-visibility" type="button" data-target="current-password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password" class="small font-weight-bold">Nueva Contraseña:</label>
+                            <div class="input-group">
+                                <input type="password" id="new-password" class="form-control" placeholder="Mínimo 4 caracteres" required minlength="4">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary toggle-password-visibility" type="button" data-target="new-password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label for="confirm-password" class="small font-weight-bold">Confirmar Nueva Contraseña:</label>
+                            <div class="input-group">
+                                <input type="password" id="confirm-password" class="form-control" placeholder="Repita la nueva contraseña" required minlength="4">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary toggle-password-visibility" type="button" data-target="confirm-password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cerrar</button>
+                        <button type="submit" id="submit-change-password-btn" class="btn btn-primary btn-sm px-4">
+                            <i class="fas fa-save mr-1"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lógica de la aplicación -->
+    <?!= include('JavaScript'); ?>
+</body>
+</html>

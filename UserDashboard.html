@@ -1,0 +1,443 @@
+<div id="wrapper">
+    <div id="content-wrapper" class="d-flex flex-column">
+        <div id="content">
+            <!-- Barra Superior -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                <div class="d-flex align-items-center">
+                    <h1 class="h3 mb-0 text-gray-800 mr-3" id="panel-title-header">Panel de Personal</h1>
+                    <span id="user-badge-container"></span>
+                    <span id="user-attendance-state-badge" class="ml-2"></span>
+                </div>
+                <ul class="navbar-nav ml-auto">
+                    <!-- Botón de Mi Asistencia / Escaneo -->
+                    <li class="nav-item d-flex align-items-center mr-3">
+                        <button id="personal-attendance-btn" class="btn btn-sm btn-primary btn-icon-split shadow-sm" title="Mi Asistencia y Escaneo">
+                            <span class="icon text-white-50"><i class="fas fa-camera"></i></span>
+                            <span class="text d-none d-sm-inline">Mi Asistencia</span>
+                        </button>
+                    </li>
+                    <!-- Botón de Cambio de Tema -->
+                    <li class="nav-item d-flex align-items-center mr-3">
+                        <button id="theme-toggle-btn" class="btn btn-sm btn-dark btn-circle" onclick="toggleTheme()" title="Cambiar Tema">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </li>
+                    <li class="nav-item dropdown no-arrow">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown">
+                            <span class="mr-2 d-none d-lg-inline text-gray-600 small" id="user-name-display"></span>
+                            <img class="img-profile rounded-circle" src="https://startbootstrap.github.io/startbootstrap-sb-admin-2/img/undraw_profile_1.svg">
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in">
+                            <a class="dropdown-item" href="#" id="change-password-menu-btn">
+                                <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>Cambiar Contraseña
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#" id="logout-button">
+                                <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>Cerrar Sesión
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="container-fluid">
+                
+                <!-- PESTAÑAS DE NAVEGACIÓN DEL USUARIO -->
+                <ul class="nav nav-tabs mb-4" id="userTab" role="tablist">
+                    <li class="nav-item"><a class="nav-link active" id="asistencia-tab" data-toggle="tab" href="#asistencia-panel" role="tab"><i class="fas fa-camera"></i> Asistencia</a></li>
+                    <li class="nav-item"><a class="nav-link" id="permisos-tab" data-toggle="tab" href="#permisos-panel" role="tab"><i class="fas fa-calendar-check"></i> Permisos</a></li>
+                    <li class="nav-item"><a class="nav-link" id="suplencias-tab" data-toggle="tab" href="#suplencias-panel" role="tab"><i class="fas fa-user-friends"></i> Suplencias</a></li>
+                    <li class="nav-item"><a class="nav-link" id="cross-tab" data-toggle="tab" href="#cross-panel" role="tab"><i class="fas fa-exchange-alt"></i> Cross de Turno</a></li>
+                    <li class="nav-item"><a class="nav-link" id="user-warnings-tab" data-toggle="tab" href="#user-warnings-panel" role="tab"><i class="fas fa-exclamation-triangle"></i> Mis Amonestaciones</a></li>
+                    <li class="nav-item"><a class="nav-link" id="horarios-tab" data-toggle="tab" href="#horarios-panel" role="tab"><i class="fas fa-clock"></i> Horarios de Clase</a></li>
+                </ul>
+
+                <!-- CONTENIDO DE LAS PESTAÑAS -->
+                <div class="tab-content" id="userTabContent">
+                    
+                    <!-- ========================================== -->
+                    <!-- 1. PESTAÑA: ASISTENCIA Y ESCÁNER           -->
+                    <!-- ========================================== -->
+                    <div class="tab-pane fade show active" id="asistencia-panel" role="tabpanel">
+                        <div class="row">
+                            <!-- ESCÁNER QR -->
+                            <div class="col-lg-5 mb-4">
+                                <div class="card shadow h-100">
+                                    <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Registrar Asistencia</h6></div>
+                                    <div class="card-body text-center">
+                                        <h5 class="font-weight-bold mb-3" id="user-status-display">
+                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando estado...
+                                        </h5>
+                                        <p class="small text-muted">Apunta tu cámara al código QR de la oficina para registrar tu Entrada o Salida.</p>
+                                        
+                                        <div id="qr-scanner-container" class="my-3" style="width: 100%; max-width: 350px; margin: auto; display: none;">
+                                            <div id="qr-reader"></div>
+                                        </div>
+                                        
+                                        <div id="action-buttons" class="mt-4">
+                                            <button id="scan-check-in" class="btn btn-success btn-icon-split mb-2 w-100"><span class="icon text-white-50"><i class="fas fa-sign-in-alt"></i></span><span class="text">Escanear ENTRADA</span></button>
+                                            <button id="scan-check-out" class="btn btn-danger btn-icon-split w-100"><span class="icon text-white-50"><i class="fas fa-sign-out-alt"></i></span><span class="text">Escanear SALIDA</span></button>
+                                        </div>
+                                        
+                                        <button id="stop-scan-button" class="btn btn-secondary mt-3 w-100" style="display: none;"><i class="fas fa-stop-circle"></i> Cancelar</button>
+                                        
+                                        <div class="mt-3">
+                                            <button id="user-request-manual-check-btn" class="btn btn-info btn-icon-split w-100" type="button">
+                                                <span class="icon text-white-50"><i class="fas fa-clipboard-list"></i></span>
+                                                <span class="text">Solicitar Registro Manual</span>
+                                            </button>
+                                        </div>
+                                        
+                                        <div id="scan-spinner" class="mt-3" style="display: none;">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                            <p class="small mt-2">Verificando ubicación y registrando...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- TABLA MIS ASISTENCIAS -->
+                            <div class="col-lg-7 mb-4">
+                                <div class="card shadow h-100">
+                                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                        <h6 class="m-0 font-weight-bold text-primary">Mis Registros Recientes</h6>
+                                        <div>
+                                            <button id="download-full-history-btn" class="btn btn-sm btn-success border shadow-sm mr-2" title="Descargar Historial Completo (Excel)"><i class="fas fa-file-excel"></i> Descargar Todo</button>
+                                            <button id="refresh-table-button" class="btn btn-sm btn-light border shadow-sm" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover" id="userAttendanceTable" width="100%" cellspacing="0">
+                                                <thead><tr><th>Fecha y Hora</th><th>Tipo</th><th>Estado</th><th>Distancia (m)</th></tr></thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- 2. PESTAÑA: PERMISOS                       -->
+                    <!-- ========================================== -->
+                    <div class="tab-pane fade" id="permisos-panel" role="tabpanel">
+                        <div class="row">
+                            <div class="col-lg-4 mb-4">
+                                <div class="card shadow">
+                                    <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Solicitar Permiso</h6></div>
+                                    <div class="card-body">
+                                        <form id="request-permission-form">
+                                            <div class="form-group">
+                                                <label class="small font-weight-bold">Tipo de Permiso</label>
+                                                <select id="req-perm-type" class="form-control form-control-sm" required>
+                                                    <option value="" disabled selected>Seleccione...</option>
+                                                    <option value="Médico">Médico</option>
+                                                    <option value="Personal">Personal</option>
+                                                    <option value="Vacaciones">Vacaciones</option>
+                                                    <option value="Otro">Otro</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-6">
+                                                    <label class="small font-weight-bold">Desde</label>
+                                                    <input type="date" id="req-perm-start-date" class="form-control form-control-sm" required>
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label class="small font-weight-bold">Hasta</label>
+                                                    <input type="date" id="req-perm-end-date" class="form-control form-control-sm" required>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="small font-weight-bold">Motivo / Comentarios</label>
+                                                <textarea id="req-perm-comments" class="form-control form-control-sm" rows="2" required></textarea>
+                                            </div>
+                                            <button type="submit" id="submit-permission-request-btn" class="btn btn-primary btn-sm w-100">Enviar Solicitud</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-8 mb-4">
+                                <div class="card shadow">
+                                    <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Mis Solicitudes de Permiso</h6></div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover" id="userPermissionsTable" width="100%" cellspacing="0">
+                                                <thead><tr><th>Rango de Fechas</th><th>Tipo</th><th>Estado</th><th>Acciones</th></tr></thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- 3. PESTAÑA: SUPLENCIAS FORMALES            -->
+                    <!-- ========================================== -->
+                    <div class="tab-pane fade" id="suplencias-panel" role="tabpanel">
+                        <div class="row">
+                            <!-- Solicitar que alguien me cubra -->
+                            <div class="col-lg-5 mb-4">
+                                <div class="card shadow h-100">
+                                    <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Solicitar que me cubran</h6></div>
+                                    <div class="card-body">
+                                        <p class="small text-muted">Solicita que un operador de otro turno te cubra. Si dejas el suplente en blanco, se enviará a la Bolsa de Guardias.</p>
+                                        <form id="create-substitution-form">
+                                            <div class="form-group">
+                                                <label class="small font-weight-bold">¿Quién te va a cubrir? (Opcional)</label>
+                                                <select id="sub-candidate" class="form-control form-control-sm">
+                                                    <option value="">Nadie / Enviar a Bolsa de Guardias</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-6">
+                                                    <label class="small font-weight-bold">Desde el día:</label>
+                                                    <input type="date" id="sub-start-date" class="form-control form-control-sm" required>
+                                                </div>
+                                                <div class="form-group col-6">
+                                                    <label class="small font-weight-bold">Hasta el día:</label>
+                                                    <input type="date" id="sub-end-date" class="form-control form-control-sm" required>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="small font-weight-bold">Comentarios (Opcional)</label>
+                                                <textarea id="sub-comments" class="form-control form-control-sm" rows="1"></textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fas fa-paper-plane"></i> Enviar Solicitud</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bolsa de Guardias Disponibles -->
+                            <div class="col-lg-7 mb-4">
+                                <div class="card shadow border-left-success h-100">
+                                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                        <h6 class="m-0 font-weight-bold text-success"><i class="fas fa-bullhorn"></i> Bolsa de Guardias Disponibles</h6>
+                                        <button id="refresh-market-btn" class="btn btn-sm btn-light border shadow-sm"><i class="fas fa-sync-alt"></i></button>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                            <table class="table table-hover mb-0" id="market-table">
+                                                <thead class="thead-light"><tr><th>Fecha</th><th>Turno a Cubrir</th><th>Titular</th><th class="text-center">Acción</th></tr></thead>
+                                                <tbody id="market-list-body"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Paneles de Estatus de Mis Suplencias -->
+                        <div class="row">
+                            <div class="col-12 mb-2 d-flex justify-content-between align-items-center">
+                                <h5 class="text-gray-800 font-weight-bold m-0">Estatus de mis Suplencias</h5>
+                                <button id="refresh-substitutions-btn" class="btn btn-sm btn-primary"><i class="fas fa-sync-alt"></i> Actualizar Listas</button>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card shadow h-100 border-left-warning">
+                                    <div class="card-header py-2"><h6 class="m-0 font-weight-bold text-warning small">Me pidieron cubrir (Pendiente de tu OK)</h6></div>
+                                    <div class="card-body p-0"><div id="pending-approval-list" class="list-group list-group-flush" style="max-height: 250px; overflow-y: auto;"></div></div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card shadow h-100 border-left-success">
+                                    <div class="card-header py-2"><h6 class="m-0 font-weight-bold text-success small">Estoy Cubriendo a:</h6></div>
+                                    <div class="card-body p-0"><div id="iam-covering-list" class="list-group list-group-flush" style="max-height: 250px; overflow-y: auto;"></div></div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card shadow h-100 border-left-info">
+                                    <div class="card-header py-2"><h6 class="m-0 font-weight-bold text-info small">Me están cubriendo:</h6></div>
+                                    <div class="card-body p-0"><div id="iam-being-covered-list" class="list-group list-group-flush" style="max-height: 250px; overflow-y: auto;"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- 4. PESTAÑA: CROSS DE TURNO                 -->
+                    <!-- ========================================== -->
+                    <div class="tab-pane fade" id="cross-panel" role="tabpanel">
+                        <div class="row">
+                            <!-- Solicitar Cross -->
+                            <div class="col-lg-5 mb-4">
+                                <div class="card shadow h-100">
+                                    <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Solicitar Cross de Turno</h6></div>
+                                    <div class="card-body">
+                                        <p class="small text-muted">Solicita intercambiar tu turno un día específico con un compañero de un turno distinto.</p>
+                                        <form id="create-cross-user-form">
+                                            <div class="form-group">
+                                                <label class="small font-weight-bold">Fecha del Intercambio:</label>
+                                                <input type="date" id="user-cross-date" class="form-control form-control-sm" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="small font-weight-bold">Compañero para el Cross:</label>
+                                                <select id="user-cross-partner" class="form-control form-control-sm" required>
+                                                    <option value="" disabled selected>Seleccione...</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" id="submit-cross-btn" class="btn btn-primary btn-sm w-100 mt-3">
+                                                <i class="fas fa-exchange-alt"></i> Solicitar Aprobación
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Lista de mis Cross -->
+                            <div class="col-lg-7 mb-4">
+                                <div class="card shadow h-100">
+                                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                        <h6 class="m-0 font-weight-bold text-primary">Mis Solicitudes de Cross</h6>
+                                        <button id="refresh-user-cross-btn" class="btn btn-sm btn-light border shadow-sm"><i class="fas fa-sync-alt"></i></button>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                            <table class="table table-hover mb-0 text-center">
+                                                <thead class="thead-light">
+                                                    <tr><th>Fecha</th><th>Intercambio con</th><th>Estado</th></tr>
+                                                </thead>
+                                                <tbody id="user-cross-list">
+                                                    <!-- Se llena por JS -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- 5. PESTAÑA: MIS AMONESTACIONES             -->
+                    <!-- ========================================== -->
+                    <div class="tab-pane fade" id="user-warnings-panel" role="tabpanel">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-danger"><i class="fas fa-exclamation-triangle mr-1"></i> Historial de Amonestaciones</h6>
+                                <button id="user-refresh-warnings-btn" class="btn btn-sm btn-light border shadow-sm" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted">A continuación se muestran las amonestaciones registradas a su nombre por el sistema o por sus coordinadores. Si desea solicitar una aclaración, comuníquese con su Coordinador de Área.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover table-sm" id="userWarningsTable" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha/Hora</th>
+                                                <th>Tipo</th>
+                                                <th>Gravedad</th>
+                                                <th>Descripción</th>
+                                                <th>Origen</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ========================================== -->
+                    <!-- 6. PESTAÑA: HORARIOS DE CLASE              -->
+                    <!-- ========================================== -->
+                    <div class="tab-pane fade" id="horarios-panel" role="tabpanel">
+                        <div class="row">
+                            <!-- Solicitar / Cargar Horario -->
+                            <div class="col-lg-5 mb-4">
+                                <div class="card shadow">
+                                    <div class="card-header py-3 bg-gradient-primary text-white"><h6 class="m-0 font-weight-bold"><i class="fas fa-clock mr-1"></i> Cargar Horario de Clases</h6></div>
+                                    <div class="card-body">
+                                        <form id="upload-schedule-form">
+                                            <div class="form-group">
+                                                <label class="small font-weight-bold text-gray-800">Imagen del Horario (Comprobante) <span class="text-danger">*</span></label>
+                                                <div class="custom-file custom-file-sm">
+                                                    <input type="file" class="custom-file-input" id="sched-image-file" accept="image/*" required>
+                                                    <label class="custom-file-label" for="sched-image-file" data-browse="Elegir">Seleccionar imagen...</label>
+                                                </div>
+                                                <small class="text-muted">Suba una foto o captura de su horario de estudios.</small>
+                                                <div class="mt-2 text-center" id="sched-img-preview-container" style="display: none;">
+                                                    <img id="sched-img-preview" src="" style="max-height: 150px; max-width: 100%; border: 1px dashed #ccc; padding: 4px; border-radius: 4px;">
+                                                </div>
+                                            </div>
+                                            <hr>
+                                            <h6 class="font-weight-bold text-primary small mb-2"><i class="fas fa-list-ul mr-1"></i> Carga Horaria Manual</h6>
+                                            <div class="form-row align-items-end mb-3">
+                                                <div class="form-group col-sm-4 mb-0">
+                                                    <label class="small font-weight-bold mb-1 text-gray-800">Día</label>
+                                                    <select id="sched-slot-day" class="form-control form-control-sm">
+                                                        <option>Lunes</option>
+                                                        <option>Martes</option>
+                                                        <option>Miércoles</option>
+                                                        <option>Jueves</option>
+                                                        <option>Viernes</option>
+                                                        <option>Sábado</option>
+                                                        <option>Domingo</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col-sm-3 mb-0">
+                                                    <label class="small font-weight-bold mb-1 text-gray-800">Inicio</label>
+                                                    <input type="time" id="sched-slot-start" class="form-control form-control-sm">
+                                                </div>
+                                                <div class="form-group col-sm-3 mb-0">
+                                                    <label class="small font-weight-bold mb-1 text-gray-800">Fin</label>
+                                                    <input type="time" id="sched-slot-end" class="form-control form-control-sm">
+                                                </div>
+                                                <div class="form-group col-sm-2 mb-0">
+                                                    <button type="button" id="add-sched-slot-btn" class="btn btn-primary btn-sm btn-block" title="Agregar Bloque"><i class="fas fa-plus"></i></button>
+                                                </div>
+                                            </div>
+                                            <div class="table-responsive mb-3" style="max-height: 150px; overflow-y: auto;">
+                                                <table class="table table-bordered table-sm small text-center mb-0" id="sched-slots-temp-table">
+                                                    <thead class="thead-light">
+                                                        <tr><th>Día</th><th>Inicio</th><th>Fin</th><th>Acción</th></tr>
+                                                    </thead>
+                                                    <tbody id="sched-slots-temp-body">
+                                                        <tr><td colspan="4" class="text-muted small">No hay bloques agregados.</td></tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <button type="submit" id="submit-schedule-btn" class="btn btn-primary btn-sm w-100"><i class="fas fa-paper-plane mr-1"></i> Enviar a Validación</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Historial de Horarios -->
+                            <div class="col-lg-7 mb-4">
+                                <div class="card shadow">
+                                    <div class="card-header py-3 d-flex justify-content-between align-items-center bg-gradient-light">
+                                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-history mr-1"></i> Historial de Horarios de Clase</h6>
+                                        <button id="refresh-sched-history-btn" class="btn btn-sm btn-light border shadow-sm" title="Recargar"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover table-sm" id="userSchedulesTable" width="100%" cellspacing="0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Fecha Solicitud</th>
+                                                        <th>Imagen</th>
+                                                        <th>Carga Horaria</th>
+                                                        <th>T. Gracia</th>
+                                                        <th>Estado</th>
+                                                        <th>Feedback / Nota</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

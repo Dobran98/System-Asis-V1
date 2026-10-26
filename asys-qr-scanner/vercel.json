@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "name": "asys-qr-scanner",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "headers": {
+        "Permissions-Policy": "camera=*",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "Access-Control-Allow-Origin": "*"
+      },
+      "dest": "/$1"
+    }
+  ]
+}

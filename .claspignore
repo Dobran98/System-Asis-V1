@@ -1,0 +1,9 @@
+# Ignorar carpeta del escáner independiente de Vercel
+asys-qr-scanner/**
+vercel-scanner/**
+node_modules/**
+.git/**
+.github/**
+*.md
+*.xlsx
+*.zip

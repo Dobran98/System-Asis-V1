@@ -1,0 +1,38 @@
+<button id="theme-toggle-btn" class="btn btn-dark theme-btn-login" onclick="toggleTheme()" title="Cambiar Tema">
+    <i class="fas fa-moon"></i>
+</button>
+<div class="container min-vh-100 d-flex align-items-center justify-content-center py-5">
+    <div class="login-card-container">
+        <div class="card o-hidden border-0 shadow-lg">
+            <div class="card-body p-4 p-sm-5">
+                <div class="text-center mb-4">
+                    <div class="login-header-icon">
+                        <i class="fas fa-qrcode fa-2x"></i>
+                    </div>
+                    <h1 class="h4 text-gray-900 font-weight-bold mb-1">¡Bienvenido!</h1>
+                    <p class="text-muted small mb-0">Sistema de Control de Asistencia</p>
+                </div>
+                <form class="user" id="login-form">
+                    <div class="form-group mb-3">
+                        <input type="email" class="form-control form-control-user" id="email" aria-describedby="emailHelp" placeholder="Ingresa tu correo electrónico..." required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <input type="password" class="form-control form-control-user" id="password" placeholder="Contraseña" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-user btn-block font-weight-bold shadow-sm">
+                        <i class="fas fa-sign-in-alt mr-1"></i> Iniciar Sesión
+                    </button>
+                </form>
+                <div id="login-spinner" class="text-center mt-3" style="display: none;">
+                    <div class="spinner-border text-primary spinner-border-sm" role="status">
+                        <span class="sr-only">Cargando...</span>
+                    </div>
+                    <span class="small text-muted ml-2">Verificando credenciales...</span>
+                </div>
+                <div id="login-error" class="text-center text-danger small mt-3" style="display: none;">
+                    <i class="fas fa-exclamation-circle mr-1"></i> Correo o contraseña incorrectos.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

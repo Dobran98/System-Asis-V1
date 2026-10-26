@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>ASIS Scanner Pro | Asys Constructora</title>
+  
+  <!-- SEO & Social Meta -->
+  <meta name="description" content="Terminal de escaneo ultrarrápido de asistencia QR para Asys Constructora y sistemas compatibles.">
+  <meta name="theme-color" content="#0a0e17">
+  
+  <!-- PWA Capabilities -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ASIS Scanner">
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- QR Engine -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- Top App Navigation Bar -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3zm-2-2h2v2h-2v-2z"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>ASIS Scanner Pro</h1>
+        <span>Terminal Universal</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div id="connection-status-badge" class="status-badge" title="Estado de la conexión de red">
+        <span class="status-dot"></span>
+        <span id="connection-status-text">En Línea</span>
+      </div>
+
+      <button id="btn-open-settings" class="icon-btn" title="Configuración del Escáner" aria-label="Abrir ajustes">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="main-content">
+
+    <!-- Offline Queue Sync Banner -->
+    <div id="offline-banner" class="offline-banner">
+      <div class="offline-banner-text">
+        <span>⚠ Tienes <strong id="offline-count">0</strong> marcas guardadas en la memoria local.</span>
+      </div>
+      <button id="btn-sync-offline">Sincronizar Ahora</button>
+    </div>
+
+    <!-- Mode: Entrada vs. Salida Selector -->
+    <section class="type-selector" aria-label="Selección de tipo de asistencia">
+      <button id="btn-type-entrada" class="type-btn btn-entrada active" aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+          <polyline points="10 17 15 12 10 7"></polyline>
+          <line x1="15" y1="12" x2="3" y2="12"></line>
+        </svg>
+        <span>ENTRADA</span>
+      </button>
+
+      <button id="btn-type-salida" class="type-btn btn-salida" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>SALIDA</span>
+      </button>
+    </section>
+
+    <!-- User Identity Widget (Personal Mode) -->
+    <section id="user-identity-card" class="user-identity-card">
+      <div class="user-identity-info">
+        <div id="user-avatar-initials" class="user-avatar">?</div>
+        <div class="user-meta">
+          <h4 id="current-user-name">Cargando...</h4>
+          <span id="current-user-id">ID: --</span>
+        </div>
+      </div>
+      <button id="btn-change-user" class="change-user-btn">Cambiar</button>
+    </section>
+
+    <!-- Scanner Viewport Box -->
+    <div class="scanner-container">
+      <div id="reader"></div>
+
+      <!-- Scanner Visual Reticle Overlay -->
+      <div id="scanner-overlay" class="scanner-overlay">
+        <div class="scanner-reticle">
+          <div class="corner corner-tl"></div>
+          <div class="corner corner-tr"></div>
+          <div class="corner corner-bl"></div>
+          <div class="corner corner-br"></div>
+          <div class="scanner-laser"></div>
+        </div>
+      </div>
+
+      <!-- Camera Floating Controls -->
+      <div class="camera-toolbar">
+        <button id="btn-flip-camera" class="tool-btn" title="Girar Cámara">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path><path d="M16 21h5v-5"></path></svg>
+          <span>Girar</span>
+        </button>
+        <button id="btn-toggle-torch" class="tool-btn" title="Linterna">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <span>Luz</span>
+        </button>
+      </div>
+
+      <!-- Active Processing Spinner Overlay -->
+      <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <span style="font-size: 0.85rem; font-weight: 600; color: #fff;">Registrando asistencia...</span>
+      </div>
+    </div>
+
+    <!-- Scanning Instructions Card -->
+    <div class="instructions-card">
+      <p id="scanner-instruction-text">
+        Apunta tu cámara al <strong>código QR oficial</strong> colocado en la sede u obra.
+      </p>
+    </div>
+
+    <!-- Recent Scans History -->
+    <section class="history-section">
+      <div class="history-header">
+        <h3>Historial de esta sesión</h3>
+        <button id="btn-clear-history" class="clear-history-btn">Limpiar</button>
+      </div>
+      <div id="history-list" class="history-list">
+        <div class="empty-history">No hay escaneos recientes en esta sesión.</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Settings Modal Drawer -->
+  <div id="settings-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Configuración de Conexión</h3>
+        <button id="btn-close-settings" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="form-group">
+          <label for="input-endpoint-url">URL del Endpoint (Google Apps Script / API)</label>
+          <input type="url" id="input-endpoint-url" placeholder="https://script.google.com/macros/s/.../exec">
+          <span class="form-hint">Pega aquí la URL de publicación de la aplicación web o tu webhook de terceros.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="select-scan-mode">Modo de Operación</label>
+          <select id="select-scan-mode">
+            <option value="master">Modo Móvil Personal (Empleado escanea QR de Obra)</option>
+            <option value="badge">Modo Tótem / Kiosco (Cámara escanea Carnet del Empleado)</option>
+          </select>
+          <span class="form-hint">Selecciona cómo opera este dispositivo.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="input-master-id">ID del QR Maestro Esperado</label>
+          <input type="text" id="input-master-id" placeholder="QR-MAESTRO-ASISTENCIA-V1">
+        </div>
+
+        <div class="form-group">
+          <label for="input-api-key">Clave de API / Token (Opcional)</label>
+          <input type="password" id="input-api-key" placeholder="Token secreto para APIs externas">
+        </div>
+
+        <div class="form-group" style="flex-direction: row; align-items: center; justify-content: space-between;">
+          <label for="check-sound" style="margin-bottom: 0;">Sonido de confirmación</label>
+          <input type="checkbox" id="check-sound" checked style="width: auto;">
+        </div>
+
+        <div class="form-group" style="flex-direction: row; align-items: center; justify-content: space-between;">
+          <label for="check-vibrate" style="margin-bottom: 0;">Vibración háptica</label>
+          <input type="checkbox" id="check-vibrate" checked style="width: auto;">
+        </div>
+
+        <button id="btn-test-connection" class="btn-secondary" type="button">Probar Conexión con Servidor</button>
+        <button id="btn-save-settings" class="btn-primary" type="button">Guardar y Aplicar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Identity Setup Modal (For Personal Mode) -->
+  <div id="user-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Tu Identificación de Trabajador</h3>
+        <button id="btn-close-user" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-secondary);">
+          Ingresa tus datos una sola vez. Quedarán almacenados en tu teléfono para que al escanear el QR de la sede tu marca sea instantánea.
+        </p>
+
+        <div class="form-group">
+          <label for="input-user-id">Número de Cédula / DNI / ID</label>
+          <input type="text" id="input-user-id" placeholder="Ej: 10234567" required>
+        </div>
+
+        <div class="form-group">
+          <label for="input-user-name">Nombre Completo</label>
+          <input type="text" id="input-user-name" placeholder="Ej: Carlos Rodríguez">
+        </div>
+
+        <button id="btn-save-user" class="btn-primary" type="button">Guardar Identidad</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Main Scanner Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

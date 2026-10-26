@@ -1,0 +1,17 @@
+{
+  "name": "system-asis-v1",
+  "version": "1.0.0",
+  "description": "Sistema Universal de Control de Asistencias QR y Gestión de Personal para Asys Constructora",
+  "main": "index.html",
+  "scripts": {
+    "scanner:dev": "npx serve asys-qr-scanner",
+    "scanner:deploy": "cd asys-qr-scanner && npx vercel --prod"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dobran98/System-Asis-V1.git"
+  },
+  "author": "Asys Constructora",
+  "license": "UNLICENSED",
+  "private": true
+}
