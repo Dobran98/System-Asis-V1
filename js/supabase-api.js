@@ -82,13 +82,13 @@ const asisApi = {
   userLogin: async function (email, password) {
     try {
       const client = window.supabaseClient;
-      const cleanEmail = String(email || '').trim().toLowerCase();
+      const cleanIdentifier = String(email || '').trim();
       const rawPassword = String(password || '').trim();
 
       const { data: user, error } = await client
         .from('usuarios')
         .select('*')
-        .ilike('email', cleanEmail)
+        .or(`email.ilike.${cleanIdentifier},user_id.ilike.${cleanIdentifier},cedula.ilike.${cleanIdentifier}`)
         .maybeSingle();
 
       if (error) {
@@ -118,7 +118,7 @@ const asisApi = {
       return {
         userId: user.user_id,
         name: user.nombre,
-        email: user.email,
+        email: user.email || `${user.user_id}@empresa.com`,
         role: user.rol,
         subRol: user.sub_rol || 'Operador/a',
         institucion: user.institucion || 'Sede Central',

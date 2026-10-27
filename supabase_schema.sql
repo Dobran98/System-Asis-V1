@@ -16,7 +16,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE IF NOT EXISTS public.usuarios (
     user_id TEXT PRIMARY KEY,
     nombre TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
+    email TEXT,
     password_hash TEXT NOT NULL,
     rol TEXT NOT NULL DEFAULT 'Usuario' CHECK (rol IN ('Admin', 'Coordinador', 'Usuario')),
     cedula TEXT UNIQUE,
@@ -35,10 +35,28 @@ CREATE TABLE IF NOT EXISTS public.usuarios (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_usuarios_email ON public.usuarios(email);
+-- Índice único condicional: garantiza unicidad cuando el correo existe, pero permite que varios usuarios no tengan correo (NULL)
+DROP INDEX IF EXISTS public.idx_usuarios_email;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_unique_email ON public.usuarios(email) WHERE email IS NOT NULL AND email <> '';
 CREATE INDEX IF NOT EXISTS idx_usuarios_cedula ON public.usuarios(cedula);
 CREATE INDEX IF NOT EXISTS idx_usuarios_rol ON public.usuarios(rol);
 CREATE INDEX IF NOT EXISTS idx_usuarios_estado ON public.usuarios(estado);
+
+-- Trigger para convertir automáticamente correos vacíos ("") a NULL al insertar o actualizar
+CREATE OR REPLACE FUNCTION public.clean_usuario_email()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.email IS NOT NULL AND TRIM(NEW.email) = '' THEN
+        NEW.email := NULL;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_clean_usuario_email ON public.usuarios;
+CREATE TRIGGER trg_clean_usuario_email
+BEFORE INSERT OR UPDATE ON public.usuarios
+FOR EACH ROW EXECUTE FUNCTION public.clean_usuario_email();
 
 -- ==============================================================================
 -- TABLA 2: ASISTENCIAS (NÚCLEO DE REGISTRO QR Y BIOMÉTRICO)
