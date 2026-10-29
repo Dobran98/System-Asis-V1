@@ -804,9 +804,6 @@ const asisApi = {
       return { success: false, message: e.message || 'Error al guardar asistencia.' };
     }
   },
-      return { success: false, message: e.message || 'Error al guardar asistencia.' };
-    }
-  },
 
   /**
    * Registro Manual de Asistencia por Admin
