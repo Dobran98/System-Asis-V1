@@ -1079,6 +1079,14 @@
                     },
                     { title: 'ID', data: 'userId', visible: false },
                     {
+                        title: 'Equipo', data: 'dispositivoVinculadoId', className: "dt-center", render: function (d, t, r) {
+                            if (d) {
+                                return '<span class="badge badge-success" title="' + (r.dispositivoInfo || '') + '"><i class="fas fa-mobile-alt mr-1"></i> Vinculado</span>';
+                            }
+                            return '<span class="badge badge-secondary"><i class="fas fa-question-circle mr-1"></i> Sin vincular</span>';
+                        }
+                    },
+                    {
                         title: 'Acciones', data: null, className: "dt-center", orderable: false, render: function (d, t, r) {
                             return '<div class="btn-group" role="group">' +
                                 '<button class="btn btn-success btn-sm admin-add-entry-btn" title="Entrada" data-user-id="' + r.userId + '" data-user-name="' + r.name + '"><i class="fas fa-sign-in-alt"></i></button>' +
@@ -1556,6 +1564,181 @@
         // ---- REGISTRO DIRECTO (SIN GPS) ----
         // GPS eliminado en v2.0 — El registro se realiza directamente tras el escaneo del QR.
 
+        
+        // ===============================================
+        // === SEGURIDAD Y VALIDACIÓN DE DISPOSITIVO ÚNICO ==
+        // ===============================================
+        function getOrCreateDeviceIdentifier() {
+            let deviceId = localStorage.getItem('asis_device_token');
+            if (!deviceId) {
+                if (window.crypto && window.crypto.randomUUID) {
+                    deviceId = window.crypto.randomUUID();
+                } else {
+                    deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 12);
+                }
+                localStorage.setItem('asis_device_token', deviceId);
+            }
+            return deviceId;
+        }
+
+        function getDeviceHardwareInfo() {
+            const ua = navigator.userAgent || '';
+            let model = 'Dispositivo Web';
+            if (/android/i.test(ua)) {
+                const m = ua.match(/Android\s+([0-9\.]+);\s+([a-zA-Z0-9\s_-]+)\s+Build/);
+                model = m && m[2] ? `Android (${m[2].trim()})` : 'Móvil Android';
+            } else if (/iphone|ipad|ipod/i.test(ua)) {
+                model = 'Apple iOS (iPhone/iPad)';
+            } else if (/windows/i.test(ua)) {
+                model = 'Windows PC';
+            } else if (/macintosh/i.test(ua)) {
+                model = 'Mac OS';
+            } else if (/linux/i.test(ua)) {
+                model = 'Linux PC';
+            }
+            const screenRes = `${window.screen.width}x${window.screen.height}`;
+            return `${model} [${screenRes}]`;
+        }
+
+        // ===============================================
+        // === EXPORTADOR DE SÁBANA SEMANAL (EXCEL) ======
+        // ===============================================
+        function handleWeeklySabanaExport(scope) {
+            let start = $('#filter-start-date').val() || $('#coord-filter-start-date').val();
+            let end = $('#filter-end-date').val() || $('#coord-filter-end-date').val();
+
+            if (!start) {
+                const today = new Date();
+                const day = today.getDay();
+                const diff = day === 0 ? -6 : 1 - day;
+                const mon = new Date(today);
+                mon.setDate(today.getDate() + diff);
+                start = mon.toISOString().split('T')[0];
+            }
+            if (!end) {
+                const mon = new Date(start + 'T00:00:00');
+                const sun = new Date(mon);
+                sun.setDate(mon.getDate() + 6);
+                end = sun.toISOString().split('T')[0];
+            }
+
+            const targetScope = scope || (currentUser.role === 'Admin' ? 'admin' : (currentUser.areas || []));
+            const btn = $(scope === 'admin' ? '#btn-export-sabana-admin' : '#btn-export-sabana-coord');
+            const origHtml = btn.html();
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Generando Sábana...');
+
+            google.script.run.withSuccessHandler(function (res) {
+                btn.prop('disabled', false).html(origHtml);
+                if (!res || !res.success) {
+                    showNotification('Error', 'No se pudo generar la sábana: ' + (res ? res.error : 'Sin datos'), 'danger');
+                    return;
+                }
+                renderAndDownloadWeeklySabana(res);
+            }).withFailureHandler(function (err) {
+                btn.prop('disabled', false).html(origHtml);
+                showNotification('Error', 'Fallo de conexión al generar la sábana: ' + err.message, 'danger');
+            }).getWeeklyAttendanceSabana(start, end, targetScope);
+        }
+
+        function renderAndDownloadWeeklySabana(res) {
+            try {
+                const meta = res.metadata;
+                const days = meta.weekDays;
+                const rows = res.filas;
+
+                if (!rows || rows.length === 0) {
+                    showNotification('Atención', 'No se encontraron operadores activos para la semana seleccionada.', 'warning');
+                    return;
+                }
+
+                const aoa = [];
+                aoa.push([meta.institucionSuperior || "MINISTERIO DEL PODER POPULAR PARA HÁBITAT Y VIVIENDA"]);
+                aoa.push([meta.constructora || "CONSTRUCTORA DEL ALBA BOLIVARIANA"]);
+                aoa.push([meta.titulo || "SÁBANA DE CONTROL DE ASISTENCIA SEMANAL — PERSONAL OPERATIVO"]);
+                aoa.push([`SEMANA: Del ${meta.periodo.inicio} al ${meta.periodo.fin}  |  ESTADO DOMINGO: ${meta.domingoLaborable ? 'LABORABLE' : 'LIBRE'}  |  TOTAL OPERADORES: ${meta.totalOperadores}  |  BASE SEMANAL: ${meta.baseDias} DÍAS`]);
+                aoa.push([]);
+
+                // Fila 6: Encabezado 1
+                const h1 = ["N°", "NOMBRES Y APELLIDOS", "CÉDULA"];
+                days.forEach(d => {
+                    h1.push(d.label);
+                    h1.push("");
+                });
+                h1.push("TOTAL ASISTENCIA");
+                h1.push("OBSERVACIONES");
+                aoa.push(h1);
+
+                // Fila 7: Sub-encabezado 2
+                const h2 = ["", "", ""];
+                days.forEach(d => {
+                    h2.push("Entrada");
+                    h2.push("Salida");
+                });
+                h2.push(`Base ${meta.baseDias}/${meta.baseDias}`);
+                h2.push("");
+                aoa.push(h2);
+
+                // Filas de datos
+                rows.forEach(r => {
+                    const rowData = [r.num, r.nombreCompleto, r.cedula];
+                    days.forEach(d => {
+                        const dayInfo = r.dias[d.dateStr] || { entrada: '--', salida: '--' };
+                        rowData.push(dayInfo.entrada);
+                        rowData.push(dayInfo.salida);
+                    });
+                    rowData.push(r.totalAsistenciaStr);
+                    rowData.push(r.observaciones || '');
+                    aoa.push(rowData);
+                });
+
+                const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+                ws['!merges'] = [
+                    { s: { r: 0, c: 0 }, e: { r: 0, c: 18 } },
+                    { s: { r: 1, c: 0 }, e: { r: 1, c: 18 } },
+                    { s: { r: 2, c: 0 }, e: { r: 2, c: 18 } },
+                    { s: { r: 3, c: 0 }, e: { r: 3, c: 18 } },
+                    { s: { r: 5, c: 0 }, e: { r: 6, c: 0 } },
+                    { s: { r: 5, c: 1 }, e: { r: 6, c: 1 } },
+                    { s: { r: 5, c: 2 }, e: { r: 6, c: 2 } },
+                    { s: { r: 5, c: 3 }, e: { r: 5, c: 4 } },
+                    { s: { r: 5, c: 5 }, e: { r: 5, c: 6 } },
+                    { s: { r: 5, c: 7 }, e: { r: 5, c: 8 } },
+                    { s: { r: 5, c: 9 }, e: { r: 5, c: 10 } },
+                    { s: { r: 5, c: 11 }, e: { r: 5, c: 12 } },
+                    { s: { r: 5, c: 13 }, e: { r: 5, c: 14 } },
+                    { s: { r: 5, c: 15 }, e: { r: 5, c: 16 } },
+                    { s: { r: 5, c: 17 }, e: { r: 6, c: 17 } },
+                    { s: { r: 5, c: 18 }, e: { r: 6, c: 18 } }
+                ];
+
+                ws['!cols'] = [
+                    { wch: 5 }, { wch: 32 }, { wch: 14 },
+                    { wch: 10 }, { wch: 10 },
+                    { wch: 10 }, { wch: 10 },
+                    { wch: 10 }, { wch: 10 },
+                    { wch: 10 }, { wch: 10 },
+                    { wch: 10 }, { wch: 10 },
+                    { wch: 10 }, { wch: 10 },
+                    { wch: 11 }, { wch: 11 },
+                    { wch: 18 },
+                    { wch: 30 }
+                ];
+
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Sábana Semanal");
+
+                const filename = `Sabana_Asistencia_${meta.periodo.inicio}_al_${meta.periodo.fin}.xlsx`;
+                XLSX.writeFile(wb, filename);
+
+                if (typeof playSuccessBeep === 'function') playSuccessBeep();
+                showNotification('Éxito', `Sábana de asistencia semanal exportada correctamente: <strong>${filename}</strong>`, 'success');
+            } catch (err) {
+                console.error(err);
+                showNotification('Error', 'Fallo al exportar el archivo Excel: ' + err.message, 'danger');
+            }
+        }
+    
         function processAttendanceDirect(type) {
             $("#action-buttons").hide();
             $("#scan-spinner").show();
@@ -1565,7 +1748,9 @@
                 .recordAttendance({
                     userId: currentUser.userId,
                     name: currentUser.name,
-                    type: type
+                    type: type,
+                    deviceId: getOrCreateDeviceIdentifier(),
+                    deviceInfo: getDeviceHardwareInfo()
                 });
         }
 
@@ -1578,7 +1763,9 @@
                 .recordAttendance({
                     userId: currentUser.userId,
                     name: currentUser.name,
-                    type: type
+                    type: type,
+                    deviceId: getOrCreateDeviceIdentifier(),
+                    deviceInfo: getDeviceHardwareInfo()
                 });
         }
 
@@ -6237,3 +6424,37 @@
         resetInactivityTimer();
     })();
 </script>
+
+        $(document).on('click', '.reset-device-btn', function () {
+            const uid = $(this).data('user-id');
+            const uname = $(this).data('user-name');
+            if (!confirm(`¿Desea desvincular el equipo de "${uname}"? El usuario podrá vincular un nuevo dispositivo en su próximo marcaje.`)) {
+                return;
+            }
+            const btn = $(this);
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+            google.script.run.withSuccessHandler(function (res) {
+                btn.prop('disabled', false).html('<i class="fas fa-unlink"></i>');
+                if (res && res.success) {
+                    showNotification('Dispositivo Desvinculado', res.message || 'Equipo reseteado con éxito.', 'success');
+                    if (typeof populateUsersManagementTable === 'function' && cachedAdminData) {
+                        cachedAdminData.users = null;
+                        populateUsersManagementTable();
+                    }
+                    if (typeof populateCoordUsersTable === 'function' && cachedCoordinatorData) {
+                        cachedCoordinatorData.users = null;
+                        populateCoordUsersTable();
+                    }
+                } else {
+                    showNotification('Error', (res ? res.message : 'Error al resetear equipo'), 'danger');
+                }
+            }).withFailureHandler(function (err) {
+                btn.prop('disabled', false).html('<i class="fas fa-unlink"></i>');
+                showNotification('Error', 'Error de red: ' + err.message, 'danger');
+            }).resetUserDevice(uid);
+        });
+
+        $(document).on('click', '#btn-export-sabana-admin', function () { handleWeeklySabanaExport('admin'); });
+        $(document).on('click', '#btn-export-sabana-coord', function () { handleWeeklySabanaExport(currentUser.areas || []); });
+    

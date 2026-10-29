@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presentación Ejecutiva | SYSTEM ASIS v2.5</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: rgba(30, 41, 59, 0.7);
+      --surface-border: rgba(255, 255, 255, 0.1);
+      --primary: #38bdf8;
+      --primary-glow: rgba(56, 189, 248, 0.25);
+      --accent: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0b1120 100%);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+    /* Header Institucional */
+    header {
+      padding: 16px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--surface-border);
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+    .header-inst h4 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .header-inst h2 {
+      font-size: 1.05rem;
+      color: var(--primary);
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .badge-ver {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .btn-icon {
+      background: transparent;
+      border: 1px solid var(--surface-border);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--primary);
+    }
+
+    /* Contenedor de Diapositivas */
+    #slider {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    .slide {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(60px);
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 80px;
+      text-align: center;
+    }
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+    }
+    .slide.prev {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(-60px);
+    }
+
+    /* Componentes de Diapositivas */
+    .slide-badge {
+      display: inline-block;
+      color: var(--accent);
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 6px 18px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+    .slide-title {
+      font-size: 2.6rem;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 16px;
+      max-width: 950px;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .slide-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    /* Grid de Tarjetas en Slide */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      max-width: 1100px;
+      width: 100%;
+      text-align: left;
+    }
+    .card-box {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    .card-box:hover {
+      transform: translateY(-4px);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--primary-glow);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+    }
+    .card-box h3 {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .card-box p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Footer de Navegación */
+    footer {
+      padding: 16px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--surface-border);
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+    .nav-btn {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--text-main);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--primary);
+      color: #0b1120;
+    }
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .dots-container {
+      display: flex;
+      gap: 8px;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .dot.active {
+      width: 28px;
+      border-radius: 10px;
+      background: var(--primary);
+    }
+    .slide-counter {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Encabezado Institucional -->
+  <header>
+    <div class="header-inst">
+      <h4>Ministerio del Poder Popular para Hábitat y Vivienda</h4>
+      <h2>Constructora del Alba Bolivariana</h2>
+    </div>
+    <div class="header-actions">
+      <span class="badge-ver"><i class="fas fa-shield-alt mr-1"></i> SYSTEM ASIS v2.5</span>
+      <button class="btn-icon" id="fullscreen-btn" title="Pantalla Completa"><i class="fas fa-expand"></i></button>
+    </div>
+  </header>
+
+  <!-- Slider de Diapositivas -->
+  <main id="slider">
+
+    <!-- Slide 1: Portada -->
+    <section class="slide active">
+      <span class="slide-badge">Presentación Ejecutiva Oficial</span>
+      <h1 class="slide-title">Sistema de Control de Asistencia QR Inteligente</h1>
+      <p class="slide-subtitle">Solución de vanguardia para la gestión del talento humano operativo, erradicación de fraudes laborales y automatización de nómina semanal en obra.</p>
+      <div class="card-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-qrcode"></i></div>
+          <h3>Escaneo Instantáneo</h3>
+          <p>Marcaje en menos de 0.5s con retroalimentación háptica y acústica, sin cuellos de botella.</p>
+        </div>
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-mobile-alt"></i></div>
+          <h3>1 Equipo por Obrero</h3>
+          <p>Blindaje criptográfico anti-fraude: cada trabajador solo puede marcar desde su teléfono registrado.</p>
+        </div>
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-file-excel"></i></div>
+          <h3>Sábana Semanal Excel</h3>
+          <p>Exportación automática Lunes a Domingo con cálculo dinámico base 6/6 o 7/7 para nómina.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 2: El Desafío y la Solución -->
+    <section class="slide">
+      <span class="slide-badge">Diagnóstico de Campo</span>
+      <h1 class="slide-title">Superando las Limitaciones Tradicionales en Obra</h1>
+      <p class="slide-subtitle">El control de asistencia tradicional presentaba fricciones que fueron eliminadas en esta versión 2.5.</p>
+      <div class="card-grid">
+        <div class="card-box">
+          <div class="card-icon" style="color: #ef4444; background: rgba(239, 68, 68, 0.15);"><i class="fas fa-times-circle"></i></div>
+          <h3>Problemas Anteriores</h3>
+          <p>• Suplantación de identidad (un obrero marcaba por tres ausentes).<br>• Trabajadores sin correo corporativo.<br>• Retardos por geolocalización GPS fallida.<br>• Reportes en formatos verticales difíciles de procesar.</p>
+        </div>
+        <div class="card-box">
+          <div class="card-icon" style="color: var(--success); background: rgba(16, 185, 129, 0.15);"><i class="fas fa-check-circle"></i></div>
+          <h3>Solución SYSTEM ASIS v2.5</h3>
+          <p>• <strong>Dispositivo Único:</strong> Bloqueo automático de teléfonos ajenos.<br>• <strong>Acceso con Cédula o Primer Nombre.</strong><br>• <strong>Escaneo sin GPS:</strong> Alta velocidad instantánea.<br>• <strong>Sábana Semanal Matricial</strong> con domingos libres automáticos.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 3: Arquitectura Híbrida -->
+    <section class="slide">
+      <span class="slide-badge">Infraestructura Tecnológica</span>
+      <h1 class="slide-title">Arquitectura Híbrida de Máxima Disponibilidad</h1>
+      <p class="slide-subtitle">Combina la velocidad de PostgreSQL en la nube con la flexibilidad de Google Workspace.</p>
+      <div class="card-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-bolt"></i></div>
+          <h3>Edge CDN (Vercel)</h3>
+          <p>Carga de interfaz ultrarrápida (0.3s) con certificado SSL y funcionamiento PWA instalable sin tiendas.</p>
+        </div>
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-database"></i></div>
+          <h3>PostgreSQL (Supabase)</h3>
+          <p>Respuestas en 10ms, integridad referencial de datos, seguridad RLS y soporte para miles de registros diarios.</p>
+        </div>
+        <div class="card-box">
+          <div class="card-icon"><i class="fab fa-google"></i></div>
+          <h3>Google Apps Script V8</h3>
+          <p>Triggers cronometrados nocturnos, respaldos automáticos y sincronización con hojas de cálculo maestras.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 4: Seguridad Dispositivo Único -->
+    <section class="slide">
+      <span class="slide-badge">Seguridad Anti-Fraude</span>
+      <h1 class="slide-title">Validación de Dispositivo Único: Cero Fraude</h1>
+      <p class="slide-subtitle">Protección activa de hardware para garantizar que quien marca está físicamente presente.</p>
+      <div class="card-grid">
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-fingerprint"></i></div>
+          <h3>Token Criptográfico de Hardware</h3>
+          <p>En el primer marcaje, el teléfono genera una firma digital única (`device_uuid`) vinculada al perfil del obrero. Si intenta marcar desde el celular de un compañero, el sistema bloquea la transacción de inmediato.</p>
+        </div>
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-undo"></i></div>
+          <h3>Reset de Equipo Administrativo</h3>
+          <p>Si el trabajador extravía su teléfono o adquiere uno nuevo, el Administrador o Coordinador pulsa <strong>"Reset Equipo"</strong> en su panel con 1 solo clic para autorizar el nuevo dispositivo.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 5: Acceso con Primer Nombre o Cédula -->
+    <section class="slide">
+      <span class="slide-badge">Experiencia de Usuario</span>
+      <h1 class="slide-title">Acceso Personal: Sin Dependencia de Correos</h1>
+      <p class="slide-subtitle">Diseñado pensando en la realidad operativa del personal obrero de construcción.</p>
+      <div class="card-grid">
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-user"></i></div>
+          <h3>Acceso con Primer Nombre</h3>
+          <p>El trabajador ingresa únicamente su primer nombre (ejemplo: <code>brando</code>). El sistema lo localiza y valida su contraseña de inmediato.</p>
+        </div>
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-id-card"></i></div>
+          <h3>Acceso con Cédula de Identidad</h3>
+          <p>Formato universal y 100% personal (ejemplo: <code>12345678</code> o <code>V-12345678</code>), permitiendo desempatar cualquier homónimo de forma transparente.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 6: Turno Nocturno y Cruce de Medianoche -->
+    <section class="slide">
+      <span class="slide-badge">Operatividad 24/7</span>
+      <h1 class="slide-title">Turno Nocturno y Guardias de 12 Horas</h1>
+      <p class="slide-subtitle">Gestión robusta para vaciados de concreto, guardias de seguridad y mantenimiento nocturno.</p>
+      <div class="card-grid">
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-moon"></i></div>
+          <h3>Cruce Inteligente de Medianoche</h3>
+          <p>Entrada a las 19:00 (Día D) y salida a las 07:00 (Día D+1) se computan como una única jornada legal completa de 12 horas estipuladas.</p>
+        </div>
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-shield-virus"></i></div>
+          <h3>Blindaje contra Trigger de Medianoche</h3>
+          <p>El trigger de auditoría de las 23:55 no cierra prematuramente a los trabajadores nocturnos; les concede plazo legal hasta las 09:00 AM del día siguiente.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 7: Sábana Semanal en Excel -->
+    <section class="slide">
+      <span class="slide-badge">Nómina y Recursos Humanos</span>
+      <h1 class="slide-title">Sábana de Asistencia Semanal Oficial</h1>
+      <p class="slide-subtitle">La planilla que Recursos Humanos necesita lista para el pago semanal en 1 clic.</p>
+      <div class="card-grid">
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-table"></i></div>
+          <h3>Matriz Lunes a Domingo</h3>
+          <p>• Solo personal Operador.<br>• Sub-casillas [Entrada | Salida] por cada día.<br>• Si marca Entrada Y Salida: día válido computado (+1).<br>• Si el domingo no se labora: marcado automáticamente como <strong>LIBRE</strong>.</p>
+        </div>
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-calculator"></i></div>
+          <h3>Base Semanal Dinámica</h3>
+          <p>• Semanas normales: Base <strong>6 / 6</strong> (Lunes a Sábado obligatorios).<br>• Semanas con domingo laborable: Base <strong>7 / 7</strong>.<br>• Columna de Observaciones con permisos, retardos y guardias consolidadas.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 8: Consola de Administración RBAC -->
+    <section class="slide">
+      <span class="slide-badge">Gobernanza y Control</span>
+      <h1 class="slide-title">Aislamiento Territorial y Seguridad RBAC</h1>
+      <p class="slide-subtitle">Segregación jerárquica de funciones en 5 roles operativos.</p>
+      <div class="card-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-user-shield"></i></div>
+          <h3>SuperAdmin & Admin</h3>
+          <p>Visión global consolidada, auditoría nacional, exportación general de sábana y parámetros maestros.</p>
+        </div>
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-map-marked-alt"></i></div>
+          <h3>Coordinador de Área</h3>
+          <p>Aislamiento estricto: visualiza, aprueba permisos y resetea dispositivos únicamente de los obreros de su obra asignada.</p>
+        </div>
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-hard-hat"></i></div>
+          <h3>Operador / Obrero</h3>
+          <p>Interfaz limpia con escáner QR de un toque, historial de marcajes y badge dinámico DENTRO/FUERA.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 9: Próximo Paso - App Móvil -->
+    <section class="slide">
+      <span class="slide-badge">Escalabilidad Futura</span>
+      <h1 class="slide-title">Evolución a App Nativa Telefónica (Android e iOS)</h1>
+      <p class="slide-subtitle">Hoja de ruta para empaquetar el sistema como aplicación nativa en Google Play y App Store.</p>
+      <div class="card-grid">
+        <div class="card-box">
+          <div class="card-icon"><i class="fab fa-android"></i></div>
+          <h3>CapacitorJS / Ionic Native</h3>
+          <p>Aprovecha el 100% de la lógica web existente y compila APKs Android y proyectos Xcode para iOS, accediendo a cámara a 60 FPS y lector biométrico de huella/FaceID.</p>
+        </div>
+        <div class="card-box">
+          <div class="card-icon"><i class="fas fa-wifi"></i></div>
+          <h3>100% Offline con SQLite</h3>
+          <p>Almacenamiento nativo ultra-seguro para obras en zonas rurales o sótanos sin cobertura telefónica, sincronizándose de forma transparente al salir a la superficie.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Barra de Navegación Inferior -->
+  <footer>
+    <button class="nav-btn" id="prev-btn" disabled><i class="fas fa-arrow-left"></i> Anterior</button>
+    <div class="dots-container" id="dots-container"></div>
+    <div class="slide-counter"><span id="curr-slide">1</span> de <span id="total-slides">9</span></div>
+    <button class="nav-btn" id="next-btn">Siguiente <i class="fas fa-arrow-right"></i></button>
+  </footer>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const currSlideEl = document.getElementById('curr-slide');
+    const totalSlidesEl = document.getElementById('total-slides');
+    const dotsContainer = document.getElementById('dots-container');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+    let currentIndex = 0;
+    const total = slides.length;
+    totalSlidesEl.textContent = total;
+
+    // Crear puntos indicadores
+    slides.forEach((_, idx) => {
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (idx === 0 ? ' active' : '');
+      dot.addEventListener('click', () => goToSlide(idx));
+      dotsContainer.appendChild(dot);
+    });
+
+    const dots = document.querySelectorAll('.dot');
+
+    function updateSlide() {
+      slides.forEach((s, idx) => {
+        s.classList.remove('active', 'prev');
+        if (idx === currentIndex) s.classList.add('active');
+        else if (idx < currentIndex) s.classList.add('prev');
+      });
+
+      dots.forEach((d, idx) => {
+        d.classList.toggle('active', idx === currentIndex);
+      });
+
+      currSlideEl.textContent = currentIndex + 1;
+      prevBtn.disabled = (currentIndex === 0);
+      nextBtn.disabled = (currentIndex === total - 1);
+    }
+
+    function goToSlide(idx) {
+      if (idx >= 0 && idx < total) {
+        currentIndex = idx;
+        updateSlide();
+      }
+    }
+
+    prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
+    nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
+
+    // Navegación por Teclado
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        goToSlide(currentIndex + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        goToSlide(currentIndex - 1);
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      }
+    });
+
+    // Pantalla Completa
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {});
+      } else {
+        document.exitFullscreen();
+      }
+    }
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+  </script>
+</body>
+</html>
+

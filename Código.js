@@ -364,6 +364,7 @@ function normalizeShift(turno) {
   if (t === "manana" || t === "mañana") return "mañana";
   if (t === "tarde") return "tarde";
   if (t === "mixto" || t === "m/t") return "mixto";
+  if (t === "nocturno" || t === "noche") return "nocturno";
   return t;
 }
 
@@ -411,26 +412,61 @@ function safeGetDate(val) {
 // ============= GESTIÓN DE AUTENTICACIÓN ================
 // =======================================================
 
-function userLogin(email, password) {
+function userLogin(identifier, password) {
   try {
+    if (!identifier || !password) return null;
+    const cleanId = String(identifier).trim().toLowerCase();
+    const cleanNum = cleanId.replace(/[^0-9]/g, '');
+    const firstName = cleanId.split(' ')[0];
+
     const usersData = getUsersData();
-    const user = usersData[email.toLowerCase()];
-    if (user && verifyPassword(password, user.password)) {
-      if (user.estado === 'Inactivo') {
-        return { inactive: true };
+    const allUsersList = Object.values(usersData);
+
+    // Buscar todos los posibles candidatos coincidentes por Cédula, Primer Nombre, UserID o Email
+    const candidates = allUsersList.filter(u => {
+      if (!u) return false;
+      const uEmail = String(u.email || '').trim().toLowerCase();
+      const uId = String(u.userId || '').trim().toLowerCase();
+      const uCed = String(u.cedula || '').trim().toLowerCase();
+      const uCedNum = uCed.replace(/[^0-9]/g, '');
+      const uName = String(u.name || '').trim().toLowerCase();
+      const uFirstName = uName.split(' ')[0];
+
+      if (uEmail === cleanId || uId === cleanId) return true;
+      if (uCed === cleanId || (cleanNum.length >= 4 && uCedNum === cleanNum)) return true;
+      if (uFirstName === firstName || uName.startsWith(firstName)) return true;
+      return false;
+    });
+
+    if (candidates.length === 0) return null;
+
+    // Desempatar buscando el usuario cuya contraseña verifique
+    let validUser = null;
+    for (let i = 0; i < candidates.length; i++) {
+      const cand = candidates[i];
+      if (verifyPassword(password, cand.password)) {
+        validUser = cand;
+        break;
       }
-      return {
-        userId: user.userId,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        foto: user.foto,
-        subRol: user.subRol || 'Operador/a',
-        areas: user.areas || [],
-        masterQRId: COMPANY_CONFIG.masterQRId
-      };
     }
-    return null;
+
+    if (!validUser) return null;
+
+    if (validUser.estado === 'Inactivo') {
+      return { inactive: true };
+    }
+
+    return {
+      userId: validUser.userId,
+      name: validUser.name,
+      email: validUser.email,
+      cedula: validUser.cedula,
+      role: validUser.role,
+      foto: validUser.foto,
+      subRol: validUser.subRol || 'Operador/a',
+      areas: validUser.areas || [],
+      masterQRId: COMPANY_CONFIG.masterQRId
+    };
   } catch (e) {
     Logger.log(`Error en userLogin: ${e.message}`);
     return null;
@@ -484,6 +520,19 @@ function autoCloseOpenAttendances() {
       if (entryDate < today) {
         const userDetails = getUserDetailsById(session.userId);
         if (userDetails) {
+          const shiftNorm = normalizeShift(userDetails.turno);
+          // Los turnos nocturnos cruzan la medianoche: no cerrar automáticamente a las 23:55
+          // Se les otorga margen hasta las 09:00 AM del día siguiente para su salida legal
+          if (shiftNorm === 'nocturno') {
+            const now = new Date();
+            const morningLimit = new Date(entryDate);
+            morningLimit.setDate(morningLimit.getDate() + 1);
+            morningLimit.setHours(9, 0, 0, 0);
+            if (now < morningLimit) {
+              return; // Guardia nocturna aún en curso o dentro del plazo matutino
+            }
+          }
+
           const closing = getClosingHourForTurno_(userDetails.turno, config);
           const closingTime = new Date(entryDate);
           closingTime.setHours(closing.hours, closing.minutes, 0, 0);
@@ -1694,27 +1743,31 @@ function getUsersData() {
   const usersObject = {};
   for (let i = 1; i < values.length; i++) {
     const row = values[i];
-    const email = row[2];
-    if (email) {
-      let parsedAreas = parseAreasRobust(row[13]);
-      let fechaInclusion = 'N/A';
-      if (row[16] && String(row[16]).trim() !== '') {
-        try {
-          const d = safeGetDate(row[16]);
-          if (d && d.getFullYear() > 1970) fechaInclusion = Utilities.formatDate(d, timeZone, 'yyyy-MM-dd');
-        } catch (e) { fechaInclusion = 'N/A'; }
-      }
-      usersObject[email.toLowerCase()] = {
-        userId: row[0], name: row[1], email: email, password: row[3], role: row[4],
-        cedula: row[5] || 'N/A', institucion: row[6] || 'N/A', telefono: row[7] || 'N/A',
-        direccion: row[8] || 'N/A', turno: row[9] || 'N/A',
-        foto: row[11] || "", estado: row[12] || "Activo",
-        areas: parsedAreas,
-        subRol: row[14] || "Operador/a",
-        toleranciaPersonalizada: row[15] !== undefined && row[15] !== "" && !isNaN(parseInt(row[15], 10)) ? parseInt(row[15], 10) : null,
-        fechaInclusion: fechaInclusion
-      };
+    const uid = row[0];
+    if (!uid) continue;
+    const email = row[2] ? String(row[2]).trim() : '';
+    let parsedAreas = parseAreasRobust(row[13]);
+    let fechaInclusion = 'N/A';
+    if (row[16] && String(row[16]).trim() !== '') {
+      try {
+        const d = safeGetDate(row[16]);
+        if (d && d.getFullYear() > 1970) fechaInclusion = Utilities.formatDate(d, timeZone, 'yyyy-MM-dd');
+      } catch (e) { fechaInclusion = 'N/A'; }
     }
+    const userRec = {
+      userId: uid, name: row[1], email: email, password: row[3], role: row[4],
+      cedula: row[5] || 'N/A', institucion: row[6] || 'N/A', telefono: row[7] || 'N/A',
+      direccion: row[8] || 'N/A', turno: row[9] || 'N/A',
+      foto: row[11] || "", estado: row[12] || "Activo",
+      areas: parsedAreas,
+      subRol: row[14] || "Operador/a",
+      toleranciaPersonalizada: row[15] !== undefined && row[15] !== "" && !isNaN(parseInt(row[15], 10)) ? parseInt(row[15], 10) : null,
+      fechaInclusion: fechaInclusion
+    };
+    if (email) {
+      usersObject[email.toLowerCase()] = userRec;
+    }
+    usersObject[String(uid).toLowerCase()] = userRec;
   }
   CACHE.put(cacheKey, JSON.stringify(usersObject), 3600);
   return usersObject;
@@ -4939,4 +4992,196 @@ function migrarContrasenasAHash() {
     errores: errores,
     mensaje: `Migración completada: ${migradas} contraseñas hasheadas correctamente.`
   };
+}
+
+// =======================================================
+// ========= SÁBANA SEMANAL DE ASISTENCIA (EXCEL) ========
+// =======================================================
+
+function getWeeklyAttendanceSabana(startDate, endDate, areaIdsOrAdmin) {
+  try {
+    const timeZone = SS.getSpreadsheetTimeZone();
+    const isAdmin = (areaIdsOrAdmin === 'admin');
+
+    // 1. Obtener todos los operadores activos
+    let allUsers = getAllUsersForAdmin().filter(u => u.estado === 'Activo');
+    // Filtrar estrictamente sub-rol Operador/a
+    let operators = allUsers.filter(u => {
+      const sub = String(u.subRol || '').toLowerCase();
+      const rol = String(u.role || '').toLowerCase();
+      return sub.includes('operador') || rol === 'usuario';
+    });
+
+    if (!isAdmin && Array.isArray(areaIdsOrAdmin) && areaIdsOrAdmin.length > 0) {
+      operators = operators.filter(u => u.areas && u.areas.some(a => areaIdsOrAdmin.indexOf(a) !== -1));
+    }
+
+    // 2. Determinar Lunes a Domingo de la semana solicitada
+    const startObj = parseDateStringAsLocal(startDate);
+    const dayOfWeek = startObj.getDay(); // 0: domingo, 1: lunes...
+    const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(startObj);
+    monday.setDate(startObj.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+
+    const weekDays = [];
+    const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const dateStr = Utilities.formatDate(d, timeZone, 'yyyy-MM-dd');
+      const dd = Utilities.formatDate(d, timeZone, 'dd');
+      const mm = Utilities.formatDate(d, timeZone, 'MM');
+      weekDays.push({
+        dateStr: dateStr,
+        dayName: dayNames[i],
+        label: `${dayNames[i]} (${dd}/${mm})`,
+        isSunday: (i === 6)
+      });
+    }
+
+    const weekStartStr = weekDays[0].dateStr;
+    const weekEndStr = weekDays[6].dateStr;
+    const weekEndObj = parseDateStringAsLocal(weekEndStr);
+    weekEndObj.setHours(23, 59, 59, 999);
+
+    // 3. Mapear asistencias de esa semana
+    const attMap = {}; // key: `${userId}_${dateStr}` => { entradas: [], salidas: [] }
+    getSheetValues(ATTENDANCE_SHEET).slice(1).forEach(r => {
+      const d = safeGetDate(r[0]);
+      if (!d) return;
+      if (d >= monday && d <= weekEndObj) {
+        const uid = String(r[1]);
+        const dateStr = Utilities.formatDate(d, timeZone, 'yyyy-MM-dd');
+        const key = `${uid}_${dateStr}`;
+        if (!attMap[key]) attMap[key] = { entradas: [], salidas: [] };
+        const timeStr = Utilities.formatDate(d, timeZone, 'HH:mm');
+        const type = String(r[5] || '').trim();
+        if (type === 'Entrada') attMap[key].entradas.push(timeStr);
+        if (type === 'Salida') attMap[key].salidas.push(timeStr);
+      }
+    });
+
+    // 4. Mapear guardias programadas del domingo
+    const dutyShiftsMap = new Map();
+    if (DUTY_SHEET) {
+      getSheetValues(DUTY_SHEET).slice(1).forEach(row => {
+        const d = safeGetDate(row[0]);
+        if (d && row[1]) {
+          dutyShiftsMap.set(Utilities.formatDate(d, timeZone, 'yyyy-MM-dd'), true);
+        }
+      });
+    }
+    const sundayHasDuty = dutyShiftsMap.has(weekEndStr);
+
+    // Detectar si alguien laboró el domingo
+    let someoneWorkedSunday = sundayHasDuty;
+    if (!someoneWorkedSunday) {
+      operators.forEach(u => {
+        const sunKey = `${String(u.userId)}_${weekEndStr}`;
+        if (attMap[sunKey] && (attMap[sunKey].entradas.length > 0 || attMap[sunKey].salidas.length > 0)) {
+          someoneWorkedSunday = true;
+        }
+      });
+    }
+
+    const baseWeeklyDays = someoneWorkedSunday ? 7 : 6;
+
+    // 5. Permisos aprobados
+    const permissionsLookup = getPermissionsLookupMap(weekStartStr, weekEndStr);
+
+    // 6. Construir filas de la sábana
+    const rows = [];
+    operators.forEach((u, idx) => {
+      let diasValidos = 0;
+      const diasData = {};
+      const obsList = [];
+
+      weekDays.forEach(wd => {
+        const key = `${String(u.userId)}_${wd.dateStr}`;
+        const rec = attMap[key] || { entradas: [], salidas: [] };
+        let entradaStr = '--';
+        let salidaStr = '--';
+        let esValido = false;
+
+        if (wd.isSunday && !someoneWorkedSunday) {
+          entradaStr = 'LIBRE';
+          salidaStr = 'LIBRE';
+        } else {
+          const hasEntrada = rec.entradas.length > 0;
+          const hasSalida = rec.salidas.length > 0;
+
+          if (hasEntrada && hasSalida) {
+            entradaStr = rec.entradas[0];
+            salidaStr = rec.salidas[rec.salidas.length - 1];
+            esValido = true;
+            diasValidos++;
+          } else if (hasEntrada && !hasSalida) {
+            entradaStr = rec.entradas[0];
+            salidaStr = '--';
+            obsList.push(`Falta salida ${wd.dayName.substring(0,3)}`);
+          } else if (!hasEntrada && hasSalida) {
+            entradaStr = '--';
+            salidaStr = rec.salidas[0];
+            obsList.push(`Falta entrada ${wd.dayName.substring(0,3)}`);
+          } else {
+            entradaStr = '--';
+            salidaStr = '--';
+            if (permissionsLookup.has(key)) {
+              obsList.push(`Permiso: ${permissionsLookup.get(key)}`);
+            }
+          }
+        }
+
+        diasData[wd.dateStr] = {
+          entrada: entradaStr,
+          salida: salidaStr,
+          valido: esValido
+        };
+      });
+
+      let cedulaDisplay = u.cedula || 'S/C';
+      if (/^\d+$/.test(cedulaDisplay)) cedulaDisplay = `V-${cedulaDisplay}`;
+
+      rows.push({
+        num: idx + 1,
+        userId: u.userId,
+        nombreCompleto: u.name,
+        cedula: cedulaDisplay,
+        turno: u.turno || 'mañana',
+        dias: diasData,
+        diasValidos: diasValidos,
+        baseSemana: baseWeeklyDays,
+        totalAsistenciaStr: `${diasValidos} / ${baseWeeklyDays}`,
+        observaciones: obsList.join('; ')
+      });
+    });
+
+    return {
+      success: true,
+      metadata: {
+        institucionSuperior: "MINISTERIO DEL PODER POPULAR PARA HÁBITAT Y VIVIENDA",
+        constructora: "CONSTRUCTORA DEL ALBA BOLIVARIANA",
+        titulo: "SÁBANA DE CONTROL DE ASISTENCIA SEMANAL — PERSONAL OPERATIVO",
+        periodo: { inicio: weekStartStr, fin: weekEndStr },
+        weekDays: weekDays,
+        domingoLaborable: someoneWorkedSunday,
+        baseDias: baseWeeklyDays,
+        totalOperadores: rows.length
+      },
+      filas: rows
+    };
+  } catch (e) {
+    Logger.log("Error en getWeeklyAttendanceSabana: " + e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+function resetUserDevice(userId) {
+  try {
+    CACHE.remove(`device_user_${userId}`);
+    return { success: true, message: "Dispositivo reseteado en caché." };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
 }

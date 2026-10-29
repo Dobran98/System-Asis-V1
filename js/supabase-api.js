@@ -77,29 +77,56 @@ const asisApi = {
   },
 
   /**
-   * Autenticación de usuario con soporte para texto plano y hash criptográfico
+   * Autenticación de usuario con soporte para Primer Nombre, Cédula, email o ID
    */
   userLogin: async function (email, password) {
     try {
       const client = window.supabaseClient;
-      const cleanIdentifier = String(email || '').trim();
+      const rawInput = String(email || '').trim();
       const rawPassword = String(password || '').trim();
 
-      const { data: user, error } = await client
+      if (!rawInput || !rawPassword) return null;
+
+      const cleanNum = rawInput.replace(/[^0-9]/g, '');
+      const firstName = rawInput.split(' ')[0].toLowerCase();
+
+      // Construir filtros de búsqueda tolerantes
+      let filterOr = [
+        `user_id.ilike.${rawInput}`,
+        `email.ilike.${rawInput}`,
+        `cedula.ilike.${rawInput}`
+      ];
+      if (cleanNum.length >= 4) {
+        filterOr.push(`cedula.ilike.V-${cleanNum}`);
+        filterOr.push(`cedula.ilike.E-${cleanNum}`);
+        filterOr.push(`cedula.eq.${cleanNum}`);
+      }
+      filterOr.push(`primer_nombre.ilike.${firstName}`);
+      filterOr.push(`nombre.ilike.${firstName}%`);
+
+      const { data: candidates, error } = await client
         .from('usuarios')
         .select('*')
-        .or(`email.ilike.${cleanIdentifier},user_id.ilike.${cleanIdentifier},cedula.ilike.${cleanIdentifier}`)
-        .maybeSingle();
+        .or(filterOr.join(','));
 
       if (error) {
-        console.error('[API] Error en login:', error);
+        console.error('[API] Error en login buscando candidatos:', error);
         return null;
       }
 
-      if (!user) return null;
+      if (!candidates || candidates.length === 0) return null;
 
-      const isValid = await this.verifyPassword(rawPassword, user.password_hash);
-      if (!isValid) return null;
+      // Desempatar buscando el candidato cuya contraseña coincida
+      let user = null;
+      for (const u of candidates) {
+        const isValid = await this.verifyPassword(rawPassword, u.password_hash);
+        if (isValid) {
+          user = u;
+          break;
+        }
+      }
+
+      if (!user) return null;
 
       // Auto-blindaje transparente: si la contraseña estaba en texto plano, pasarla a hash de inmediato
       if (!String(user.password_hash).includes(':')) {
@@ -119,12 +146,16 @@ const asisApi = {
         userId: user.user_id,
         name: user.nombre,
         email: user.email || `${user.user_id}@empresa.com`,
+        cedula: user.cedula || '',
+        primerNombre: user.primer_nombre || firstName,
         role: user.rol,
         subRol: user.sub_rol || 'Operador/a',
         institucion: user.institucion || 'Sede Central',
         turno: user.turno || 'mañana',
         areas: Array.isArray(user.areas_ids) ? user.areas_ids : [],
         foto: user.foto_url || '',
+        dispositivoVinculadoId: user.dispositivo_vinculado_id || null,
+        dispositivoInfo: user.dispositivo_info || null,
         masterQRId: 'QR-MAESTRO-ASISTENCIA-V1'
       };
     } catch (e) {
@@ -140,16 +171,17 @@ const asisApi = {
     try {
       const client = window.supabaseClient;
 
-      const [users, areas, rules, stats] = await Promise.all([
+      const [users, areas, rules, stats, attendance] = await Promise.all([
         this.getAllUsersForAdmin(),
         this.getAreasConfig(),
         this.getPermisosRoles(),
-        this.getAdminDashboardStats(startDate, endDate)
+        this.getAdminDashboardStats(startDate, endDate),
+        this.getAttendanceRecords('admin', startDate, endDate)
       ]);
 
       return {
         stats: stats,
-        attendance: null,
+        attendance: attendance,
         users: users,
         areas: areas,
         absentees: [],
@@ -646,6 +678,7 @@ const asisApi = {
         userId: u.user_id,
         name: u.nombre,
         email: u.email,
+        primerNombre: u.primer_nombre || (u.nombre ? u.nombre.split(' ')[0] : ''),
         role: u.rol,
         subRol: u.sub_rol || 'Operador/a',
         cedula: u.cedula || '',
@@ -655,7 +688,10 @@ const asisApi = {
         foto: u.foto_url || '',
         telefono: u.telefono || '',
         direccion: u.direccion || '',
-        areas: Array.isArray(u.areas_ids) ? u.areas_ids : []
+        areas: Array.isArray(u.areas_ids) ? u.areas_ids : [],
+        dispositivoVinculadoId: u.dispositivo_vinculado_id || null,
+        dispositivoInfo: u.dispositivo_info || null,
+        dispositivoFecha: u.dispositivo_fecha_vinculacion || null
       }));
     } catch (e) {
       console.error('[API] Error getAllUsersForAdmin:', e);
@@ -664,13 +700,62 @@ const asisApi = {
   },
 
   /**
-   * Registro de Asistencia (Empleado o Escáner QR)
+   * Desvincular / Resetear dispositivo de un usuario (Admin/Coordinador)
+   */
+  resetUserDevice: async function (userId) {
+    try {
+      const client = window.supabaseClient;
+      const { error } = await client.from('usuarios').update({
+        dispositivo_vinculado_id: null,
+        dispositivo_info: null,
+        dispositivo_fecha_vinculacion: null
+      }).eq('user_id', userId);
+
+      if (error) throw error;
+      return { success: true, message: 'Dispositivo desvinculado con éxito. El usuario podrá vincular su nuevo equipo en su próximo marcaje.' };
+    } catch (e) {
+      console.error('[API] Error resetUserDevice:', e);
+      return { success: false, message: e.message || 'Error al resetear dispositivo.' };
+    }
+  },
+
+  /**
+   * Registro de Asistencia (Empleado o Escáner QR) con Validación de Dispositivo Único
    */
   recordAttendance: async function (data) {
     try {
       const client = window.supabaseClient;
       const uid = data.userId || data.id;
       const type = data.type || 'Entrada';
+
+      // 0. Validar dispositivo único anti-fraude (1 equipo por usuario)
+      const deviceId = data.deviceId || data.dispositivoId;
+      const deviceInfo = data.deviceInfo || data.dispositivoInfo || 'Dispositivo Web';
+
+      if (deviceId) {
+        const { data: userDevice } = await client
+          .from('usuarios')
+          .select('dispositivo_vinculado_id, dispositivo_info, nombre')
+          .eq('user_id', uid)
+          .maybeSingle();
+
+        if (userDevice) {
+          if (!userDevice.dispositivo_vinculado_id) {
+            // Primer uso: vincular este equipo de inmediato a su perfil
+            await client.from('usuarios').update({
+              dispositivo_vinculado_id: deviceId,
+              dispositivo_info: deviceInfo,
+              dispositivo_fecha_vinculacion: new Date().toISOString()
+            }).eq('user_id', uid);
+          } else if (userDevice.dispositivo_vinculado_id !== deviceId) {
+            // Intento desde un dispositivo diferente: Bloquear de inmediato
+            return {
+              success: false,
+              message: `⛔ Dispositivo no autorizado: Tu usuario está vinculado a (${userDevice.dispositivo_info || 'otro equipo'}). Solo puedes marcar desde tu equipo registrado para evitar fraudes. Si cambiaste de equipo, solicita al Administrador que lo resetee.`
+            };
+          }
+        }
+      }
 
       // 1. Validar estado previo (evitar doble entrada o salida sin entrada previa)
       const lastState = await this.getLastAttendanceState(uid);
@@ -716,6 +801,9 @@ const asisApi = {
       };
     } catch (e) {
       console.error('[API] Error recordAttendance:', e);
+      return { success: false, message: e.message || 'Error al guardar asistencia.' };
+    }
+  },
       return { success: false, message: e.message || 'Error al guardar asistencia.' };
     }
   },
@@ -786,8 +874,407 @@ const asisApi = {
     }
   },
 
-  getAttendanceRecords: async function (userId) {
-    return this.getUserAttendanceHistory(userId);
+  /**
+   * Obtener registros de asistencia para la tabla del Administrador o usuario individual
+   */
+  getAttendanceRecords: async function (userIdOrAdmin, startDateStr, endDateStr) {
+    try {
+      const client = window.supabaseClient;
+      let query = client.from('asistencias').select('*');
+
+      const isAll = !userIdOrAdmin || String(userIdOrAdmin).toLowerCase() === 'admin';
+      if (!isAll) {
+        query = query.eq('user_id', String(userIdOrAdmin));
+      }
+
+      if (startDateStr) {
+        query = query.gte('timestamp', `${startDateStr}T00:00:00`);
+      }
+      if (endDateStr) {
+        query = query.lte('timestamp', `${endDateStr}T23:59:59.999`);
+      }
+
+      query = query.order('timestamp', { ascending: false }).limit(isAll ? 350 : 100);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return (data || []).map(a => {
+        let tsStr = a.timestamp;
+        try {
+          const d = new Date(a.timestamp);
+          if (!isNaN(d.getTime())) {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const hh = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            const ss = String(d.getSeconds()).padStart(2, '0');
+            tsStr = `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+          }
+        } catch (e) {}
+
+        return {
+          id: a.id,
+          timestamp: tsStr,
+          userId: a.user_id,
+          name: a.nombre,
+          institucion: a.institucion || 'Sede Central',
+          turno: a.turno || 'mañana',
+          type: a.tipo,
+          status: a.estado,
+          shift: a.turno,
+          distance: a.distancia_metros || 0
+        };
+      });
+    } catch (e) {
+      console.error('[API] Error getAttendanceRecords:', e);
+      return [];
+    }
+  },
+
+  /**
+   * Obtener registros de asistencia para la tabla del Coordinador (filtrado por sus áreas)
+   */
+  getAttendanceRecordsForCoordinator: async function (areaIds, startDateStr, endDateStr) {
+    try {
+      const users = await this.getAllUsersForCoordinator(areaIds);
+      const userIds = users.map(u => String(u.userId));
+      if (!userIds || userIds.length === 0) return [];
+
+      const client = window.supabaseClient;
+      let query = client.from('asistencias').select('*').in('user_id', userIds);
+
+      if (startDateStr) {
+        query = query.gte('timestamp', `${startDateStr}T00:00:00`);
+      }
+      if (endDateStr) {
+        query = query.lte('timestamp', `${endDateStr}T23:59:59.999`);
+      }
+
+      query = query.order('timestamp', { ascending: false }).limit(350);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return (data || []).map(a => {
+        let tsStr = a.timestamp;
+        try {
+          const d = new Date(a.timestamp);
+          if (!isNaN(d.getTime())) {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const hh = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            const ss = String(d.getSeconds()).padStart(2, '0');
+            tsStr = `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+          }
+        } catch (e) {}
+
+        return {
+          id: a.id,
+          timestamp: tsStr,
+          userId: a.user_id,
+          name: a.nombre,
+          institucion: a.institucion || 'Sede Central',
+          turno: a.turno || 'mañana',
+          type: a.tipo,
+          status: a.estado,
+          shift: a.turno,
+          distance: a.distancia_metros || 0
+        };
+      });
+    } catch (e) {
+      console.error('[API] Error getAttendanceRecordsForCoordinator:', e);
+      return [];
+    }
+  },
+
+  /**
+   * Obtener usuarios subordinados al Coordinador según sus áreas
+   */
+  getAllUsersForCoordinator: async function (coordinatorAreaIds) {
+    try {
+      if (!coordinatorAreaIds || coordinatorAreaIds.length === 0) return [];
+      const allUsers = await this.getAllUsersForAdmin();
+      return allUsers.filter(u => {
+        if (!u.areas || !Array.isArray(u.areas) || u.areas.length === 0) return false;
+        return u.areas.some(a => coordinatorAreaIds.includes(a));
+      });
+    } catch (e) {
+      console.error('[API] Error getAllUsersForCoordinator:', e);
+      return [];
+    }
+  },
+
+  /**
+   * Datos de Fase 1 para el Dashboard del Coordinador
+   */
+  getCoordinatorDashboardData_Phase1: async function (areaIds) {
+    try {
+      const [users, areasConfig, accessRules, attendance] = await Promise.all([
+        this.getAllUsersForCoordinator(areaIds),
+        this.getAreasConfig(),
+        this.getPermisosRoles(),
+        this.getAttendanceRecordsForCoordinator(areaIds)
+      ]);
+
+      return {
+        stats: null,
+        attendance: attendance,
+        users: users,
+        areasConfig: areasConfig,
+        accessRules: accessRules
+      };
+    } catch (e) {
+      console.error('[API] Error getCoordinatorDashboardData_Phase1:', e);
+      return { error: e.message };
+    }
+  },
+
+  /**
+   * Datos de Fase 2 para el Dashboard del Coordinador
+   */
+  getCoordinatorDashboardData_Phase2: async function (areaIds, startDate, endDate) {
+    try {
+      const [permissions, duties, hoursReport, substitutions, crossTurnos, warnings, warningTypes, manualRequests] = await Promise.all([
+        this.getPermissionRequests(false, null),
+        this.getDutyShifts(),
+        this.calculateHoursWorkedReport(startDate, endDate),
+        this.getSubstitutions(),
+        this.getCrossTurnosList(),
+        this.getAmonestaciones(null),
+        this.getTiposAmonestacion(),
+        this.getManualCheckRequests('coordinator')
+      ]);
+
+      return {
+        permissions: permissions || [],
+        duties: duties || [],
+        hoursReport: hoursReport || [],
+        substitutions: substitutions || [],
+        crossTurnos: crossTurnos || [],
+        warnings: warnings || [],
+        warningTypes: warningTypes || [],
+        schedules: [],
+        approvedSchedules: [],
+        manualRequests: manualRequests || []
+      };
+    } catch (e) {
+      console.error('[API] Error getCoordinatorDashboardData_Phase2:', e);
+      return { error: e.message };
+    }
+  },
+
+  /**
+   * GENERADOR DE DATOS PARA LA SÁBANA SEMANAL DE ASISTENCIA (EXCEL)
+   * Formato horizontal continuo Lunes a Domingo con sub-casillas Entrada/Salida,
+   * cálculo dinámico base 6/6 o 7/7, domingo libre y sólo operadores.
+   */
+  getWeeklyAttendanceSabana: async function (startDate, endDate, areaIdsOrAdmin) {
+    try {
+      const client = window.supabaseClient;
+
+      // 1. Obtener todos los operadores activos
+      const { data: allUsers, error: usersErr } = await client
+        .from('usuarios')
+        .select('*')
+        .eq('estado', 'Activo')
+        .order('nombre', { ascending: true });
+
+      if (usersErr) throw usersErr;
+
+      // Filtrar estrictamente rol u oficio Operador/a
+      let operators = (allUsers || []).filter(u => {
+        const sub = String(u.sub_rol || '').toLowerCase();
+        const rol = String(u.rol || '').toLowerCase();
+        return sub.includes('operador') || rol === 'usuario';
+      });
+
+      // Si es coordinador, filtrar por sus áreas
+      if (areaIdsOrAdmin && areaIdsOrAdmin !== 'admin' && Array.isArray(areaIdsOrAdmin) && areaIdsOrAdmin.length > 0) {
+        operators = operators.filter(u => {
+          const userAreas = Array.isArray(u.areas_ids) ? u.areas_ids : [];
+          return userAreas.some(a => areaIdsOrAdmin.includes(a));
+        });
+      }
+
+      // 2. Determinar Lunes a Domingo de la semana solicitada
+      const start = new Date(startDate + 'T00:00:00');
+      const dayOfWeek = start.getDay(); // 0: domingo, 1: lunes, ..., 6: sábado
+      const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(start);
+      monday.setDate(start.getDate() + diffToMonday);
+      monday.setHours(0, 0, 0, 0);
+
+      const weekDays = [];
+      const dayNames = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+        weekDays.push({
+          dateStr: dateStr,
+          dayName: dayNames[i],
+          label: `${dayNames[i]} (${dd}/${mm})`,
+          isSunday: (i === 6)
+        });
+      }
+
+      const weekStartStr = weekDays[0].dateStr;
+      const weekEndStr = weekDays[6].dateStr;
+
+      // 3. Consultar asistencias de esa semana completa
+      const { data: attendances, error: attErr } = await client
+        .from('asistencias')
+        .select('*')
+        .gte('timestamp', `${weekStartStr}T00:00:00`)
+        .lte('timestamp', `${weekEndStr}T23:59:59.999`)
+        .order('timestamp', { ascending: true });
+
+      if (attErr) throw attErr;
+
+      // 4. Consultar si hay guardias programadas para el domingo
+      const { data: duties } = await client
+        .from('guardias')
+        .select('*')
+        .eq('fecha_guardia', weekEndStr);
+
+      const sundayHasDuty = (duties && duties.length > 0);
+
+      // 5. Consultar permisos en el rango
+      const { data: perms } = await client
+        .from('permisos')
+        .select('*')
+        .eq('estado', 'Aprobado')
+        .lte('fecha_inicio', `${weekEndStr}T23:59:59`)
+        .gte('fecha_fin', `${weekStartStr}T00:00:00`);
+
+      // Agrupar asistencias por user_id y fecha (YYYY-MM-DD)
+      const attMap = {};
+      (attendances || []).forEach(a => {
+        const d = new Date(a.timestamp);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+        const key = `${a.user_id}_${dateStr}`;
+        if (!attMap[key]) attMap[key] = { entradas: [], salidas: [] };
+
+        const hh = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        const timeStr = `${hh}:${min}`;
+
+        if (a.tipo === 'Entrada') attMap[key].entradas.push(timeStr);
+        if (a.tipo === 'Salida') attMap[key].salidas.push(timeStr);
+      });
+
+      // Detectar si alguien laboró el domingo de manera efectiva
+      let someoneWorkedSunday = sundayHasDuty;
+      if (!someoneWorkedSunday) {
+        operators.forEach(u => {
+          const sunKey = `${u.user_id}_${weekEndStr}`;
+          if (attMap[sunKey] && (attMap[sunKey].entradas.length > 0 || attMap[sunKey].salidas.length > 0)) {
+            someoneWorkedSunday = true;
+          }
+        });
+      }
+
+      const baseWeeklyDays = someoneWorkedSunday ? 7 : 6;
+
+      // 6. Construir filas de la sábana para cada operador
+      const rows = [];
+      operators.forEach((u, idx) => {
+        let diasValidos = 0;
+        const diasData = {};
+        const obsList = [];
+
+        weekDays.forEach((wd) => {
+          const key = `${u.user_id}_${wd.dateStr}`;
+          const rec = attMap[key] || { entradas: [], salidas: [] };
+          let entradaStr = '--';
+          let salidaStr = '--';
+          let esValido = false;
+
+          if (wd.isSunday && !someoneWorkedSunday) {
+            // Domingo normal no laborable: marcado automáticamente como LIBRE
+            entradaStr = 'LIBRE';
+            salidaStr = 'LIBRE';
+          } else {
+            const hasEntrada = rec.entradas.length > 0;
+            const hasSalida = rec.salidas.length > 0;
+
+            if (hasEntrada && hasSalida) {
+              entradaStr = rec.entradas[0];
+              salidaStr = rec.salidas[rec.salidas.length - 1];
+              esValido = true;
+              diasValidos++;
+            } else if (hasEntrada && !hasSalida) {
+              entradaStr = rec.entradas[0];
+              salidaStr = '--';
+              obsList.push(`Falta salida ${wd.dayName.substring(0,3)}`);
+            } else if (!hasEntrada && hasSalida) {
+              entradaStr = '--';
+              salidaStr = rec.salidas[0];
+              obsList.push(`Falta entrada ${wd.dayName.substring(0,3)}`);
+            } else {
+              // Ausente en día laboral
+              entradaStr = '--';
+              salidaStr = '--';
+              const hasPerm = (perms || []).find(p => p.user_id === u.user_id);
+              if (hasPerm) {
+                obsList.push(`Permiso: ${hasPerm.tipo}`);
+              }
+            }
+          }
+
+          diasData[wd.dateStr] = {
+            entrada: entradaStr,
+            salida: salidaStr,
+            valido: esValido
+          };
+        });
+
+        // Formatear cédula
+        let cedulaDisplay = u.cedula || 'S/C';
+        if (/^\d+$/.test(cedulaDisplay)) cedulaDisplay = `V-${cedulaDisplay}`;
+
+        rows.push({
+          num: idx + 1,
+          userId: u.user_id,
+          nombreCompleto: u.nombre,
+          cedula: cedulaDisplay,
+          turno: u.turno || 'mañana',
+          dias: diasData,
+          diasValidos: diasValidos,
+          baseSemana: baseWeeklyDays,
+          totalAsistenciaStr: `${diasValidos} / ${baseWeeklyDays}`,
+          observaciones: obsList.join('; ')
+        });
+      });
+
+      return {
+        success: true,
+        metadata: {
+          institucionSuperior: "MINISTERIO DEL PODER POPULAR PARA HÁBITAT Y VIVIENDA",
+          constructora: "CONSTRUCTORA DEL ALBA BOLIVARIANA",
+          titulo: "SÁBANA DE CONTROL DE ASISTENCIA SEMANAL — PERSONAL OPERATIVO",
+          periodo: { inicio: weekStartStr, fin: weekEndStr },
+          weekDays: weekDays,
+          domingoLaborable: someoneWorkedSunday,
+          baseDias: baseWeeklyDays,
+          totalOperadores: rows.length
+        },
+        filas: rows
+      };
+    } catch (e) {
+      console.error('[API] Error getWeeklyAttendanceSabana:', e);
+      return { success: false, error: e.message };
+    }
   },
 
   /**
@@ -830,17 +1317,21 @@ const asisApi = {
         }
       }
 
-      // Validar turno permitido por el constraint de la BD ('mañana', 'tarde', 'mixto')
+      // Validar turno permitido por el constraint de la BD ('mañana', 'tarde', 'mixto', 'nocturno')
       const rawTurno = String(userData.turno || 'mañana').toLowerCase();
-      const turno = ['mañana', 'tarde', 'mixto'].includes(rawTurno) ? rawTurno : 'mañana';
+      const turno = ['mañana', 'tarde', 'mixto', 'nocturno'].includes(rawTurno) ? rawTurno : 'mañana';
 
       // Validar rol permitido ('Admin', 'Coordinador', 'Usuario')
       const rawRol = userData.role || userData.rol || 'Usuario';
       const rol = ['Admin', 'Coordinador', 'Usuario'].includes(rawRol) ? rawRol : 'Usuario';
 
+      const finalNombre = userData.name || userData.nombre || `Usuario ${uid}`;
+      const primerNombre = finalNombre.trim().split(' ')[0].toLowerCase();
+
       const payload = {
         user_id: uid,
-        nombre: userData.name || userData.nombre || `Usuario ${uid}`,
+        nombre: finalNombre,
+        primer_nombre: primerNombre,
         email: cleanEmail,
         rol: rol,
         sub_rol: userData.subRol || userData.sub_rol || 'Operador/a',

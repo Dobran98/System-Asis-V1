@@ -3,7 +3,13 @@
         <div id="content">
             <!-- Barra Superior -->
             <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-                <h1 class="h3 mb-0 text-gray-800">Panel de Administrador</h1>
+                <div class="d-flex align-items-center">
+                    <img src="assets/img/logo_constructora_alba.png" onerror="this.onerror=null; this.src='assets/img/logo_constructora_alba.svg'" alt="Alba" style="max-height: 38px; margin-right: 12px;">
+                    <div>
+                        <div class="text-xs font-weight-bold text-uppercase text-secondary" style="font-size: 0.68rem; letter-spacing: 0.5px;">Ministerio del Poder Popular para Hábitat y Vivienda</div>
+                        <div class="font-weight-bold text-primary" style="font-size: 0.95rem;">Constructora del Alba Bolivariana <span class="badge badge-primary ml-1" style="font-size: 0.65rem;">ADMIN</span></div>
+                    </div>
+                </div>
                 <ul class="navbar-nav ml-auto">
                     <!-- Botón de Mi Asistencia / Escaneo -->
                     <li class="nav-item d-flex align-items-center mr-3">
@@ -387,7 +393,10 @@
                             <div class="card shadow mb-4">
                                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                     <h6 class="m-0 font-weight-bold text-primary">Registros de Asistencia</h6>
-                                    <button id="refresh-admin-attendance" class="btn btn-sm btn-light border shadow-sm" title="Recargar Tabla"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    <div>
+                                        <button id="btn-export-sabana-admin" class="btn btn-sm btn-success shadow-sm mr-2" title="Exportar Sábana Semanal (Excel)"><i class="fas fa-file-excel mr-1"></i> Sábana Semanal (Excel)</button>
+                                        <button id="refresh-admin-attendance" class="btn btn-sm btn-light border shadow-sm" title="Recargar Tabla"><i class="fas fa-sync-alt text-primary"></i></button>
+                                    </div>
                                 </div>
                                 <div class="card-body">
                                     <div class="row mb-3 align-items-end">
@@ -439,6 +448,7 @@
                                                 <th>Estado</th>
                                                 <th>Desde</th>
                                                 <th>ID</th>
+                                                <th>Equipo</th>
                                                 <th>Acciones</th>
                                             </tr>
                                         </thead>
@@ -1143,6 +1153,7 @@
                                 <option value="Mañana">Mañana</option>
                                 <option value="Tarde">Tarde</option>
                                 <option value="Mixto">Mixto</option>
+                                <option value="Nocturno">Nocturno</option>
                             </select>
                         </div>
                         <div class="col-md-4 form-group">

@@ -391,6 +391,41 @@ async function onQrCodeSuccess(decodedText) {
 }
 
 // ==========================================
+// SEGURIDAD Y VALIDACIÓN DE DISPOSITIVO ÚNICO
+// ==========================================
+function getOrCreateDeviceIdentifier() {
+  let deviceId = localStorage.getItem('asis_device_token');
+  if (!deviceId) {
+    if (window.crypto && window.crypto.randomUUID) {
+      deviceId = window.crypto.randomUUID();
+    } else {
+      deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 12);
+    }
+    localStorage.setItem('asis_device_token', deviceId);
+  }
+  return deviceId;
+}
+
+function getDeviceHardwareInfo() {
+  const ua = navigator.userAgent || '';
+  let model = 'Terminal Web / PWA';
+  if (/android/i.test(ua)) {
+    const m = ua.match(/Android\s+([0-9\.]+);\s+([a-zA-Z0-9\s_-]+)\s+Build/);
+    model = m && m[2] ? `Android (${m[2].trim()})` : 'Móvil Android';
+  } else if (/iphone|ipad|ipod/i.test(ua)) {
+    model = 'Apple iOS (iPhone)';
+  } else if (/windows/i.test(ua)) {
+    model = 'Windows PC';
+  } else if (/macintosh/i.test(ua)) {
+    model = 'Mac OS';
+  } else if (/linux/i.test(ua)) {
+    model = 'Linux PC';
+  }
+  const screenRes = `${window.screen.width}x${window.screen.height}`;
+  return `${model} [${screenRes}]`;
+}
+
+// ==========================================
 // DESPACHADOR UNIVERSAL (MULTI-SISTEMA)
 // ==========================================
 async function dispatchAttendanceRecord(record) {
@@ -401,7 +436,9 @@ async function dispatchAttendanceRecord(record) {
     data: {
       userId: record.userId,
       name: record.name,
-      type: record.type
+      type: record.type,
+      deviceId: getOrCreateDeviceIdentifier(),
+      deviceInfo: getDeviceHardwareInfo()
     },
     meta: {
       timestamp: timestamp,

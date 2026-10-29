@@ -2,6 +2,7 @@ import csv
 import json
 import urllib.request
 import urllib.error
+import os
 
 SUPABASE_URL = 'https://bitplsgoqipffkamdmnx.supabase.co/rest/v1/usuarios'
 ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpdHBsc2dvcWlwZmZrYW1kbW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNDA5ODAsImV4cCI6MjEwODYxNjk4MH0.Dju5VAHt4vwdzsCzbis9S-Z0ZSS64XaMwGXryQ_EeZE'
@@ -13,23 +14,37 @@ headers = {
     'Prefer': 'resolution=merge-duplicates,return=minimal'
 }
 
+csv_file = 'usuarios_200_completo.csv' if os.path.exists('usuarios_200_completo.csv') else 'usuarios_para_importar_con_email.csv'
+print(f"Leyendo archivo: {csv_file}...")
+
 records = []
-with open('usuarios_para_importar_con_email.csv', 'r', encoding='utf-8') as f:
+with open(csv_file, 'r', encoding='utf-8') as f:
     reader = csv.DictReader(f)
     for row in reader:
+        nombre = row.get('nombre', '').strip()
+        primer_nombre = nombre.split()[0].lower() if nombre else ''
+        email = row.get('email', '').strip() or None
+        cedula = row.get('cedula', '').strip() or None
+        turno = row.get('turno', 'mañana').strip().lower()
+        if turno not in ['mañana', 'tarde', 'mixto', 'nocturno']:
+            turno = 'mañana'
+
         records.append({
-            'user_id': row['user_id'],
-            'nombre': row['nombre'],
-            'email': row['email'],
-            'password_hash': row['password_hash'],
-            'rol': row['rol'],
-            'estado': row['estado'],
-            'sub_rol': row['sub_rol']
+            'user_id': row['user_id'].strip(),
+            'nombre': nombre,
+            'primer_nombre': primer_nombre,
+            'email': email,
+            'cedula': cedula,
+            'turno': turno,
+            'password_hash': row.get('password_hash', 'user123').strip(),
+            'rol': row.get('rol', 'Usuario').strip(),
+            'estado': row.get('estado', 'Activo').strip(),
+            'sub_rol': row.get('sub_rol', 'Operador/a').strip(),
+            'institucion': row.get('institucion', 'Constructora del Alba').strip()
         })
 
-print(f"Cargados {len(records)} registros para importar...")
+print(f"Cargados {len(records)} registros listos para sincronizar...")
 
-# Insertar en lotes de 50
 BATCH_SIZE = 50
 total_processed = 0
 
