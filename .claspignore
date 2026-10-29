@@ -14,5 +14,6 @@ styles/**
 *.sql
 *.csv
 *.pdf
+scratch/**
 MANUAL_DE_USUARIO_SISTEMA_ASIS.html
 DIAPOSITIVAS_SISTEMA_ASIS.html

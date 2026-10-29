@@ -171,12 +171,14 @@ const asisApi = {
     try {
       const client = window.supabaseClient;
 
-      const [users, areas, rules, stats, attendance] = await Promise.all([
+      const [users, areas, rules, stats, attendance, absentees, openSessions] = await Promise.all([
         this.getAllUsersForAdmin(),
         this.getAreasConfig(),
         this.getPermisosRoles(),
         this.getAdminDashboardStats(startDate, endDate),
-        this.getAttendanceRecords('admin', startDate, endDate)
+        this.getAttendanceRecords('admin', startDate, endDate),
+        this.getTodaysAbsentees(),
+        this.getOpenAttendanceSessions()
       ]);
 
       return {
@@ -184,8 +186,8 @@ const asisApi = {
         attendance: attendance,
         users: users,
         areas: areas,
-        absentees: [],
-        openSessions: [],
+        absentees: absentees || [],
+        openSessions: openSessions || [],
         accessRules: rules
       };
     } catch (e) {
@@ -679,10 +681,97 @@ const asisApi = {
   },
 
   /**
-   * Ausentes del día
+   * Ausentes del día: Personal activo (no administradores) que debía laborar hoy
+   * y que aún no ha registrado su Entrada en el sistema.
    */
   getTodaysAbsentees: async function () {
-    return [];
+    try {
+      const client = window.supabaseClient;
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${yyyy}-${mm}-${dd}`;
+      const dayOfWeek = now.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+
+      // 1. Obtener todos los usuarios activos
+      const { data: allUsers, error: uErr } = await client
+        .from('usuarios')
+        .select('*')
+        .eq('estado', 'Activo')
+        .order('nombre', { ascending: true });
+
+      if (uErr) throw uErr;
+
+      // Filtrar sólo personal operativo / trabajadores (excluir roles Admin)
+      const nonAdminUsers = (allUsers || []).filter(u => {
+        const rol = String(u.rol || '').toLowerCase();
+        return rol !== 'admin';
+      });
+
+      // 2. Si hoy es domingo (0), verificar si hay guardias programadas hoy
+      if (dayOfWeek === 0) {
+        const { data: duties } = await client
+          .from('guardias')
+          .select('*')
+          .eq('fecha_guardia', todayStr);
+
+        // Si no hay guardia dominical, el domingo es de descanso general (sin inasistencias)
+        if (!duties || duties.length === 0) {
+          return [];
+        }
+      }
+
+      // 3. Consultar quiénes ya marcaron Entrada hoy
+      const { data: todayEntries, error: aErr } = await client
+        .from('asistencias')
+        .select('user_id')
+        .gte('timestamp', `${todayStr}T00:00:00`)
+        .lte('timestamp', `${todayStr}T23:59:59.999`)
+        .eq('tipo', 'Entrada');
+
+      if (aErr) throw aErr;
+
+      const presentUserIds = new Set((todayEntries || []).map(a => String(a.user_id)));
+
+      // 4. Consultar permisos aprobados vigentes hoy
+      const { data: approvedPerms } = await client
+        .from('permisos')
+        .select('user_id, tipo')
+        .eq('estado', 'Aprobado')
+        .lte('fecha_inicio', `${todayStr}T23:59:59`)
+        .gte('fecha_fin', `${todayStr}T00:00:00`);
+
+      const permsMap = new Map();
+      (approvedPerms || []).forEach(p => permsMap.set(String(p.user_id), p.tipo));
+
+      // 5. Los inasistentes son los usuarios que no han marcado Entrada hoy
+      const absentees = [];
+      nonAdminUsers.forEach(u => {
+        const uid = String(u.user_id);
+        if (presentUserIds.has(uid)) return; // Presente hoy
+
+        // Si tiene permiso aprobado, no es inasistencia no justificada
+        if (permsMap.has(uid)) return;
+
+        let cedulaDisplay = u.cedula || 'S/C';
+        if (/^\d+$/.test(cedulaDisplay)) cedulaDisplay = `V-${cedulaDisplay}`;
+
+        absentees.push({
+          userId: u.user_id,
+          name: u.nombre,
+          institucion: u.institucion || 'Sede Central',
+          turno: u.turno || 'mañana',
+          cedula: cedulaDisplay,
+          subRol: u.sub_rol || 'Operador/a'
+        });
+      });
+
+      return absentees;
+    } catch (e) {
+      console.error('[API] Error getTodaysAbsentees:', e);
+      return [];
+    }
   },
 
   /**
@@ -726,10 +815,12 @@ const asisApi = {
         cedula: u.cedula || '',
         institucion: u.institucion || 'Sede Central',
         turno: u.turno || 'mañana',
+        nacimiento: u.nacimiento ? String(u.nacimiento).slice(0, 10) : '',
         estado: u.estado || 'Activo',
         foto: u.foto_url || '',
         telefono: u.telefono || '',
         direccion: u.direccion || '',
+        fechaInclusion: u.fecha_inclusion ? String(u.fecha_inclusion).slice(0, 10) : 'N/A',
         areas: Array.isArray(u.areas_ids) ? u.areas_ids : [],
         dispositivoVinculadoId: u.dispositivo_vinculado_id || null,
         dispositivoInfo: u.dispositivo_info || null,

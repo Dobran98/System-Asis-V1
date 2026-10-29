@@ -1156,10 +1156,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     },
                     {
                         title: 'Acciones', data: null, className: "dt-center", orderable: false, render: function (d, t, r) {
+                            let resetBtn = '';
+                            if (r.dispositivoVinculadoId) {
+                                resetBtn = '<button class="btn btn-secondary btn-sm reset-device-btn" title="Desvincular Dispositivo Registrado" data-user-id="' + r.userId + '" data-user-name="' + r.name + '"><i class="fas fa-mobile-alt"></i><i class="fas fa-times text-danger ml-1"></i></button>';
+                            }
                             return '<div class="btn-group" role="group">' +
                                 '<button class="btn btn-success btn-sm admin-add-entry-btn" title="Entrada" data-user-id="' + r.userId + '" data-user-name="' + r.name + '"><i class="fas fa-sign-in-alt"></i></button>' +
                                 '<button class="btn btn-danger btn-sm admin-add-exit-btn" title="Salida" data-user-id="' + r.userId + '" data-user-name="' + r.name + '"><i class="fas fa-sign-out-alt"></i></button>' +
                                 '<button class="btn btn-warning btn-sm edit-user-btn" title="Editar"><i class="fas fa-edit"></i></button>' +
+                                resetBtn +
                                 '<button class="btn btn-danger btn-sm delete-user-btn" title="Eliminar"><i class="fas fa-trash-alt"></i></button>' +
                                 '</div>';
                         }
@@ -1472,11 +1477,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
             google.script.run.withSuccessHandler(function (absentees) {
                 listContainer.empty();
-                if (absentees.length === 0) {
+                const count = (absentees && Array.isArray(absentees)) ? absentees.length : 0;
+                $('#absent-count-badge').text(count > 0 ? count : '');
+                if (!absentees || absentees.length === 0) {
                     listContainer.html('<div class="list-group-item list-group-item-success text-center"><i class="fas fa-check-circle"></i> No hay inasistencias.</div>');
                 } else {
                     absentees.forEach(function (user) {
-                        listContainer.append('<div class="list-group-item d-flex justify-content-between"><div><h6 class="mb-0">' + user.name + '</h6><small class="text-muted">' + user.institucion + ' - ' + user.turno + '</small></div><span class="badge badge-danger">Ausente</span></div>');
+                        const cedulaDisplay = (user.cedula && user.cedula !== 'S/C') ? ' <span class="badge badge-light border ml-1">' + user.cedula + '</span>' : '';
+                        listContainer.append('<div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3"><div><h6 class="mb-0 font-weight-bold text-dark" style="font-size:0.88rem;">' + user.name + cedulaDisplay + '</h6><small class="text-muted">' + (user.institucion || 'Sede Central') + ' &bull; Turno: ' + (user.turno || 'mañana') + '</small></div><span class="badge badge-danger">Inasistente</span></div>');
                     });
                 }
             }).withFailureHandler(function (err) {
@@ -3478,11 +3486,24 @@ document.addEventListener("DOMContentLoaded", function () {
                     },
                     { title: 'ID', data: 'userId', visible: false },
                     {
+                        title: 'Equipo', data: 'dispositivoVinculadoId', className: "dt-center", render: function (d, t, r) {
+                            if (d) {
+                                return '<span class="badge badge-success" title="' + (r.dispositivoInfo || '') + '"><i class="fas fa-mobile-alt mr-1"></i> Vinculado</span>';
+                            }
+                            return '<span class="badge badge-secondary"><i class="fas fa-question-circle mr-1"></i> Sin vincular</span>';
+                        }
+                    },
+                    {
                         title: 'Acciones', data: null, className: "dt-center", orderable: false, render: function (d, t, r) {
+                            let resetBtn = '';
+                            if (r.dispositivoVinculadoId) {
+                                resetBtn = '<button class="btn btn-secondary btn-sm reset-device-btn" title="Desvincular Dispositivo Registrado" data-user-id="' + r.userId + '" data-user-name="' + r.name + '"><i class="fas fa-mobile-alt"></i><i class="fas fa-times text-danger ml-1"></i></button>';
+                            }
                             return '<div class="btn-group" role="group">' +
                                 '<button class="btn btn-success btn-sm coord-add-entry-btn mr-1" title="Entrada" data-user-id="' + r.userId + '" data-user-name="' + r.name + '"><i class="fas fa-sign-in-alt"></i></button>' +
                                 '<button class="btn btn-danger btn-sm coord-add-exit-btn mr-1" title="Salida" data-user-id="' + r.userId + '" data-user-name="' + r.name + '"><i class="fas fa-sign-out-alt"></i></button>' +
                                 '<button class="btn btn-warning btn-sm coord-edit-user-btn" title="Editar"><i class="fas fa-edit"></i></button>' +
+                                resetBtn +
                                 '<button class="btn btn-danger btn-sm coord-request-delete-btn" title="Solicitar Baja" data-id="' + r.userId + '" data-name="' + r.name + '"><i class="fas fa-user-minus"></i></button>' +
                                 '</div>';
                         }
