@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+  <rect width="200" height="60" rx="8" fill="#1e293b"/>
+  <!-- Emblema Tricolor -->
+  <path d="M12 15 L28 15 L24 23 L12 23 Z" fill="#facc15"/>
+  <path d="M12 24 L24 24 L20 32 L12 32 Z" fill="#2563eb"/>
+  <path d="M12 33 L20 33 L16 41 L12 41 Z" fill="#dc2626"/>
+  <!-- Techo / Vivienda -->
+  <path d="M38 32 L46 22 L54 32 Z" fill="#38bdf8"/>
+  <rect x="41" y="32" width="10" height="10" fill="#e2e8f0"/>
+  <!-- Texto -->
+  <text x="62" y="24" font-family="'Inter', Arial, sans-serif" font-size="8" font-weight="bold" fill="#f8fafc" letter-spacing="0.5">MINISTERIO DEL PODER POPULAR</text>
+  <text x="62" y="34" font-family="'Inter', Arial, sans-serif" font-size="8" font-weight="bold" fill="#38bdf8">PARA HÁBITAT Y VIVIENDA</text>
+  <text x="62" y="44" font-family="'Inter', Arial, sans-serif" font-size="6.5" fill="#94a3b8">REPÚBLICA BOLIVARIANA DE VENEZUELA</text>
+</svg>

@@ -7,7 +7,7 @@
         }
 
         // ---- VARIABLES GLOBALES ----
-        let currentUser = null;
+        let currentUser = null; window.currentUser = null;
         let html5QrCode = null;
         let activeScanType = null;
         let masterQRId = null;
@@ -94,7 +94,7 @@
                         showNotification("Error", "Error al cargar datos del panel: " + errorMsg, "danger");
                         return;
                     }
-                    cachedAdminData = data;
+                    cachedAdminData = data; window.cachedAdminData = data;
 
                     // Aplicar restricciones de pestañas y tarjetas según permisos dinámicos y sub-rol
                     const tabsAdmin = [
@@ -1657,7 +1657,8 @@
                 end = sun.toISOString().split('T')[0];
             }
 
-            const targetScope = scope || (currentUser.role === 'Admin' ? 'admin' : (currentUser.areas || []));
+            const activeUser = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : (window.currentUser || JSON.parse(sessionStorage.getItem('currentUser') || '{}'));
+            const targetScope = scope || (activeUser.role === 'Admin' ? 'admin' : (activeUser.areas || []));
             const btn = $(scope === 'admin' ? '#btn-export-sabana-admin' : '#btn-export-sabana-coord');
             const origHtml = btn.html();
             btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Generando Sábana...');
@@ -1773,6 +1774,8 @@
                 showNotification('Error', 'Fallo al exportar el archivo Excel: ' + err.message, 'danger');
             }
         }
+        window.handleWeeklySabanaExport = handleWeeklySabanaExport;
+        window.renderAndDownloadWeeklySabana = renderAndDownloadWeeklySabana;
     
         function processAttendanceDirect(type) {
             $("#action-buttons").hide();
@@ -1877,7 +1880,7 @@
         // --- Lógica de App Base ---
         function logout() {
             stopScanner();
-            currentUser = null;
+            currentUser = null; window.currentUser = null;
             sessionStorage.removeItem("currentUser");
             const tables = ['adminAttendanceTable', 'userAttendanceTable', 'usersTable', 'dutiesTable', 'hoursReportTable', 'detailedReportTable', 'adminPermissionsTable', 'userPermissionsTable', 'substitutionsTable', 'crossTable'];
             tables.forEach(function (id) {
@@ -2030,7 +2033,7 @@
                     $("#login-error").text("Su usuario se encuentra inactivo. Comuníquese con el administrador.").show();
                     return;
                 }
-                currentUser = u;
+                currentUser = u; window.currentUser = u;
                 sessionStorage.setItem("currentUser", JSON.stringify(u));
                 masterQRId = u.masterQRId || "QR-MAESTRO-ASISTENCIA-V1";
                 routeByRole(u);
@@ -3130,7 +3133,7 @@
                         showNotification("Error", "Error al cargar datos del panel: " + errorMsg, "danger");
                         return;
                     }
-                    cachedCoordinatorData = data;
+                    cachedCoordinatorData = data; window.cachedCoordinatorData = data;
 
                     // Aplicar restricciones de pestañas y tarjetas según permisos dinámicos y sub-rol
                     const tabsCoord = [
@@ -4043,7 +4046,7 @@
         (function () {
             let u = sessionStorage.getItem("currentUser");
             if (u) {
-                currentUser = JSON.parse(u);
+                currentUser = JSON.parse(u); window.currentUser = currentUser;
                 masterQRId = currentUser.masterQRId || "QR-MAESTRO-ASISTENCIA-V1";
                 routeByRole(currentUser);
             } else {
@@ -5713,8 +5716,6 @@
                 .changeUserPassword(currentUser.userId, currentPass, newPass);
         });
 
-    });
-
     // --- MOTOR DE GENERACIÓN DE REPORTES (Fase 3) ---
     let currentReportScope = null;
 
@@ -6473,13 +6474,17 @@
                 btn.prop('disabled', false).html('<i class="fas fa-unlink"></i>');
                 if (res && res.success) {
                     showNotification('Dispositivo Desvinculado', res.message || 'Equipo reseteado con éxito.', 'success');
-                    if (typeof populateUsersManagementTable === 'function' && cachedAdminData) {
-                        cachedAdminData.users = null;
-                        populateUsersManagementTable();
+                    if (typeof populateUsersManagementTable === 'function' || typeof window.populateUsersManagementTable === 'function') {
+                        if (typeof cachedAdminData !== 'undefined' && cachedAdminData) cachedAdminData.users = null;
+                        if (window.cachedAdminData) window.cachedAdminData.users = null;
+                        const p = (typeof populateUsersManagementTable === 'function') ? populateUsersManagementTable : window.populateUsersManagementTable;
+                        p();
                     }
-                    if (typeof populateCoordUsersTable === 'function' && cachedCoordinatorData) {
-                        cachedCoordinatorData.users = null;
-                        populateCoordUsersTable();
+                    if (typeof populateCoordUsersTable === 'function' || typeof window.populateCoordUsersTable === 'function') {
+                        if (typeof cachedCoordinatorData !== 'undefined' && cachedCoordinatorData) cachedCoordinatorData.users = null;
+                        if (window.cachedCoordinatorData) window.cachedCoordinatorData.users = null;
+                        const p = (typeof populateCoordUsersTable === 'function') ? populateCoordUsersTable : window.populateCoordUsersTable;
+                        p();
                     }
                 } else {
                     showNotification('Error', (res ? res.message : 'Error al resetear equipo'), 'danger');
@@ -6490,6 +6495,22 @@
             }).resetUserDevice(uid);
         });
 
-        $(document).on('click', '#btn-export-sabana-admin', function () { handleWeeklySabanaExport('admin'); });
-        $(document).on('click', '#btn-export-sabana-coord', function () { handleWeeklySabanaExport(currentUser.areas || []); });
-    
+        $(document).on('click', '#btn-export-sabana-admin', function () {
+            const fn = (typeof handleWeeklySabanaExport === 'function') ? handleWeeklySabanaExport : window.handleWeeklySabanaExport;
+            if (typeof fn === 'function') {
+                fn('admin');
+            } else {
+                console.error('handleWeeklySabanaExport no disponible');
+            }
+        });
+        $(document).on('click', '#btn-export-sabana-coord', function () {
+            const fn = (typeof handleWeeklySabanaExport === 'function') ? handleWeeklySabanaExport : window.handleWeeklySabanaExport;
+            const u = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : (window.currentUser || JSON.parse(sessionStorage.getItem('currentUser') || '{}'));
+            const areas = u.areas || [];
+            if (typeof fn === 'function') {
+                fn(areas);
+            } else {
+                console.error('handleWeeklySabanaExport no disponible');
+            }
+        });
+});

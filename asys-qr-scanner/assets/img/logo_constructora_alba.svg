@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+  <rect width="200" height="60" rx="8" fill="#0f172a"/>
+  <!-- Casco / Torre Grúa Constructora -->
+  <circle cx="28" cy="30" r="16" fill="#3b82f6" opacity="0.2"/>
+  <path d="M20 34 L28 20 L36 34 Z" fill="#38bdf8"/>
+  <rect x="25" y="28" width="6" height="12" fill="#f59e0b"/>
+  <circle cx="28" cy="22" r="3" fill="#ffffff"/>
+  <!-- Texto -->
+  <text x="50" y="27" font-family="'Inter', Arial, sans-serif" font-size="10" font-weight="900" fill="#ffffff" letter-spacing="0.5">CONSTRUCTORA</text>
+  <text x="50" y="39" font-family="'Inter', Arial, sans-serif" font-size="9" font-weight="bold" fill="#38bdf8">DEL ALBA BOLIVARIANA</text>
+  <text x="50" y="48" font-family="'Inter', Arial, sans-serif" font-size="6" fill="#cbd5e1" letter-spacing="0.8">INGENIERÍA &amp; INFRAESTRUCTURA</text>
+</svg>

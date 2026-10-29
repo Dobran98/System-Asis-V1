@@ -246,32 +246,74 @@ const asisApi = {
   },
 
   /**
+   * Recarga ligera del Dashboard de Administración por cambio de rango de fechas
+   */
+  refreshAdminDashboardFiltered: async function (startDate, endDate) {
+    try {
+      const [stats, attendance, hoursReport] = await Promise.all([
+        this.getAdminDashboardStats(startDate, endDate),
+        this.getAttendanceRecords('admin', startDate, endDate),
+        this.calculateHoursWorkedReport(startDate, endDate)
+      ]);
+      return {
+        stats: stats,
+        attendance: attendance,
+        hoursReport: hoursReport
+      };
+    } catch (e) {
+      console.error('[API] Error refreshAdminDashboardFiltered:', e);
+      return { error: e.message };
+    }
+  },
+
+  /**
    * Estadísticas del panel de administración
    */
   getAdminDashboardStats: async function (startDate, endDate) {
     try {
       const client = window.supabaseClient;
       const [uRes, aRes] = await Promise.all([
-        client.from('usuarios').select('user_id, estado').eq('estado', 'Activo'),
-        client.from('asistencias').select('*').order('timestamp', { ascending: false }).limit(200)
+        client.from('usuarios').select('user_id, estado, rol').eq('estado', 'Activo'),
+        client.from('asistencias').select('*').order('timestamp', { ascending: false }).limit(500)
       ]);
 
       const today = new Date().toISOString().split('T')[0];
-      const todayRecords = (aRes.data || []).filter(a => a.timestamp && a.timestamp.startsWith(today));
+      const allRecords = aRes.data || [];
+      const todayRecords = allRecords.filter(a => a.timestamp && a.timestamp.startsWith(today));
       const todayEntries = todayRecords.filter(a => a.tipo === 'Entrada').length;
-      const totalUsers = (uRes.data || []).length;
+      const todayChecks = todayRecords.length;
+
+      const nonAdminUsers = (uRes.data || []).filter(u => !u.rol || u.rol.toLowerCase() !== 'admin');
+      const totalUsers = nonAdminUsers.length > 0 ? nonAdminUsers.length : (uRes.data || []).length;
+
+      let filteredRecords = allRecords;
+      if (startDate && endDate && typeof startDate === 'string' && typeof endDate === 'string' && startDate.trim() !== '' && endDate.trim() !== '') {
+        const s = startDate.includes('T') ? startDate.split('T')[0] : startDate.trim();
+        const e = endDate.includes('T') ? endDate.split('T')[0] : endDate.trim();
+        filteredRecords = allRecords.filter(r => {
+          if (!r.timestamp) return false;
+          const dt = r.timestamp.split('T')[0];
+          return dt >= s && dt <= e;
+        });
+      }
+
+      const totalChecks = filteredRecords.length;
+      const outsideRangeChecks = filteredRecords.filter(r => r.estado === 'Fuera de Rango').length;
 
       return {
         totalUsers: totalUsers,
-        activeUsers: totalUsers,
+        activeUsers: (uRes.data || []).length,
+        todayChecks: todayChecks,
         todayAttendance: todayEntries,
+        totalChecks: totalChecks,
+        outsideRangeChecks: outsideRangeChecks,
         pendingRequests: 0,
         punctualityRate: 98,
         onTimeUsers: todayEntries
       };
     } catch (e) {
       console.error('[API] Error getAdminDashboardStats:', e);
-      return { totalUsers: 1, activeUsers: 1, todayAttendance: 0, pendingRequests: 0, punctualityRate: 100, onTimeUsers: 0 };
+      return { totalUsers: 1, activeUsers: 1, todayChecks: 0, todayAttendance: 0, totalChecks: 0, outsideRangeChecks: 0, pendingRequests: 0, punctualityRate: 100, onTimeUsers: 0 };
     }
   },
 
@@ -784,6 +826,7 @@ const asisApi = {
         user_id: uid,
         nombre: finalName,
         turno: finalTurno,
+        institucion: data.institucion || 'Sede Central',
         tipo: type,
         estado: data.estado || 'Presente',
         latitud: data.latitude || 0,
@@ -884,11 +927,13 @@ const asisApi = {
         query = query.eq('user_id', String(userIdOrAdmin));
       }
 
-      if (startDateStr) {
-        query = query.gte('timestamp', `${startDateStr}T00:00:00`);
+      if (startDateStr && typeof startDateStr === 'string' && startDateStr.trim() !== '' && startDateStr !== 'null' && startDateStr !== 'undefined') {
+        const cleanStart = startDateStr.includes('T') ? startDateStr.split('T')[0] : startDateStr.trim();
+        query = query.gte('timestamp', `${cleanStart}T00:00:00`);
       }
-      if (endDateStr) {
-        query = query.lte('timestamp', `${endDateStr}T23:59:59.999`);
+      if (endDateStr && typeof endDateStr === 'string' && endDateStr.trim() !== '' && endDateStr !== 'null' && endDateStr !== 'undefined') {
+        const cleanEnd = endDateStr.includes('T') ? endDateStr.split('T')[0] : endDateStr.trim();
+        query = query.lte('timestamp', `${cleanEnd}T23:59:59.999`);
       }
 
       query = query.order('timestamp', { ascending: false }).limit(isAll ? 350 : 100);
@@ -942,11 +987,13 @@ const asisApi = {
       const client = window.supabaseClient;
       let query = client.from('asistencias').select('*').in('user_id', userIds);
 
-      if (startDateStr) {
-        query = query.gte('timestamp', `${startDateStr}T00:00:00`);
+      if (startDateStr && typeof startDateStr === 'string' && startDateStr.trim() !== '' && startDateStr !== 'null' && startDateStr !== 'undefined') {
+        const cleanStart = startDateStr.includes('T') ? startDateStr.split('T')[0] : startDateStr.trim();
+        query = query.gte('timestamp', `${cleanStart}T00:00:00`);
       }
-      if (endDateStr) {
-        query = query.lte('timestamp', `${endDateStr}T23:59:59.999`);
+      if (endDateStr && typeof endDateStr === 'string' && endDateStr.trim() !== '' && endDateStr !== 'null' && endDateStr !== 'undefined') {
+        const cleanEnd = endDateStr.includes('T') ? endDateStr.split('T')[0] : endDateStr.trim();
+        query = query.lte('timestamp', `${cleanEnd}T23:59:59.999`);
       }
 
       query = query.order('timestamp', { ascending: false }).limit(350);
@@ -1060,6 +1107,26 @@ const asisApi = {
       };
     } catch (e) {
       console.error('[API] Error getCoordinatorDashboardData_Phase2:', e);
+      return { error: e.message };
+    }
+  },
+
+  /**
+   * Recarga ligera del Dashboard de Coordinador por cambio de rango de fechas
+   */
+  refreshCoordinatorDashboardFiltered: async function (areaIds, startDate, endDate) {
+    try {
+      const [attendance, hoursReport] = await Promise.all([
+        this.getAttendanceRecordsForCoordinator(areaIds, startDate, endDate),
+        this.calculateHoursWorkedReport(startDate, endDate)
+      ]);
+      return {
+        stats: null,
+        attendance: attendance,
+        hoursReport: hoursReport
+      };
+    } catch (e) {
+      console.error('[API] Error refreshCoordinatorDashboardFiltered:', e);
       return { error: e.message };
     }
   },
