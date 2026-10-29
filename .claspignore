@@ -1,9 +1,16 @@
-# Ignorar carpeta del escáner independiente de Vercel
+# Ignorar carpeta del escáner independiente de Vercel y frontend web
 asys-qr-scanner/**
 vercel-scanner/**
 node_modules/**
 .git/**
 .github/**
+js/**
+assets/**
+styles/**
 *.md
 *.xlsx
 *.zip
+*.py
+*.sql
+*.csv
+DIAPOSITIVAS_SISTEMA_ASIS.html
